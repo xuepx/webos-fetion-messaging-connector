@@ -1,5 +1,5 @@
 if (typeof require === "undefined") {
-   require = IMPORTS.require;
+    require = IMPORTS.require;
 }
 
 var Foundations = IMPORTS.foundations;
@@ -19,7 +19,6 @@ var Person = ContactsLib.Person;
 var Transport = IMPORTS["mojoservice.transport"]
 
 
-
 /**
  * Special Error for webOS JavaScript Services
  * @param {String} msg the error message
@@ -28,7 +27,7 @@ var Transport = IMPORTS["mojoservice.transport"]
 /* Thanks DougReeder! */
 function ServiceError(msg, errorCode) {
     this.message = msg;
-   this.errorCode = errorCode;
+    this.errorCode = errorCode;
 }
 ServiceError.prototype = new Error();
 ServiceError.prototype.name = "ServiceError";
