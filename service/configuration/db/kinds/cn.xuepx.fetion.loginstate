@@ -1,6 +1,6 @@
 {
-    "id": "com.ericblade.synergy.loginstate:1",
-    "owner": "com.ericblade.synergy.service",
+    "id": "cn.xuepx.fetion.loginstate:1",
+    "owner": "cn.xuepx.fetion.service",
     "sync": true,
     "indexes": [
         {

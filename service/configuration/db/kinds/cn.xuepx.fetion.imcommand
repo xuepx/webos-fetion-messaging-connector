@@ -1,0 +1,6 @@
+{
+    "id": "cn.xuepx.fetion.imcommand:1",
+    "owner": "cn.xuepx.fetion.service",
+    "sync": true,
+    "extends": [ "com.palm.imcommand:1" ]
+}

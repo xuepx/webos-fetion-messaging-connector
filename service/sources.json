@@ -36,9 +36,6 @@
         "source":"prologue.js"
     },
     {
-        "source":"serviceAssistant.js"
-    },
-    {
         "source":"serviceEndPoints.js"
     }
 ]

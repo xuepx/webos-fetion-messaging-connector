@@ -1,7 +1,7 @@
 {
     "extends": [ "com.palm.immessage:1" ],
-    "id": "com.ericblade.synergy.immessage:1",
-    "owner": "com.ericblade.synergy.service",
+    "id": "cn.xuepx.fetion.immessage:1",
+    "owner": "cn.xuepx.fetion.service",
     "sync": true,
     "indexes": [
         {

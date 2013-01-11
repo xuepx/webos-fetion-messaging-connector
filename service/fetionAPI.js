@@ -489,7 +489,8 @@ var addFriend = function (cookies, mobile, callback) {
         }
     });
 }
-//fetionLogin('130000000', 'password', function (inResponse) {
+fetionLogin('130000000', 'password', function (inResponse) {
+    console.log(inResponse);
 //        getAllContact(inResponse.cookies.join(";"), function (inResponse2) {
 //            console.log(inResponse2.allContactList);
 //        })
@@ -516,4 +517,4 @@ var addFriend = function (cookies, mobile, callback) {
 //            exit(0)
 //        });
 //    }
-//)
+})

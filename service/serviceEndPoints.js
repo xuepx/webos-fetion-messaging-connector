@@ -81,20 +81,26 @@ var checkCredentials = Class.create({
     run:function (future) {
         var args = this.controller.args;
         console.log("checkCredentials", args.username, args.password);
-
-        future.result = {
-            returnValue:true,
-            credentials:{
-                common:{
-                    password:args.password,
-                    username:args.username
+        fetionLogin(args.username, args.password, function (inResponse) {
+            if (inResponse.returnValue === false) {
+                future.result = {returnValue:false, errorCode:"401_UNAUTHORIZED"}; // Login ERROR
+            } else {
+                future.result = {
+                    returnValue:true,
+                    credentials:{
+                        common:{
+                            password:args.password,
+                            username:args.username
+                        }
+                    },
+                    config:{
+                        password:args.password,
+                        username:args.username,
+                        cookies:inResponse.cookies.join(";")
+                    }
                 }
-            },
-            config:{
-                password:args.password,
-                username:args.username
             }
-        }
+        })
     }
 });
 
@@ -118,30 +124,30 @@ var onCreate = Class.create({
         // This is purely optional, and according to the docs here:
         // https://developer.palm.com/content/api/dev-guide/synergy/creating-synergy-contacts-package.html
 
-        // You should be able to do this by specifying a file: service/configuration/db/kinds/com.ericblade.synergy.immessage
+        // You should be able to do this by specifying a file: service/configuration/db/kinds/cn.xuepx.fetion.immessage
         // and then placing the contents of this permissions variable as JSON inside that file.
         // I am doing this from code, merely to present it since we can't comment system JSON.
 
         var permissions = [
             {
                 type:"db.kind",
-                object:"com.ericblade.synergy.immessage:1",
-                caller:"com.ericblade.*",
+                object:IM_MESSAGE_KIND,
+                caller:KIND_PREFIX,
                 operations:{
                     read:"allow",
                     create:"allow",
-                    "delete":"allow",
+                    delete:"allow",
                     update:"allow"
                 }
             },
             {
                 type:"db.kind",
-                object:"com.ericblade.synergy.immessage:1",
+                object:IM_MESSAGE_KIND,
                 caller:"com.palm.*",
                 operations:{
                     read:"allow",
                     create:"allow",
-                    "delete":"allow",
+                    delete:"allow",
                     update:"allow"
                 }
             }
@@ -150,6 +156,29 @@ var onCreate = Class.create({
         PalmCall.call("palm://com.palm.db/", "putPermissions", { permissions:permissions }).then(function (fut) {
             console.log("permissions put result=", JSON.stringify(fut.result));
             future.result = { returnValue:true, permissionsresult:fut.result };
+        });
+
+
+        var B64username = Base64.encode(args.config.username);
+        var B64password = Base64.encode(args.config.password);
+        var B64cookie = Base64.encode(args.config.cookies);
+        var keystore1 = { "keyname":"FetionUsername"+args.accountId, "keydata":B64username, "type":"AES", "nohide":true};
+        var keystore2 = { "keyname":"FetionPassword"+args.accountId, "keydata":B64password, "type":"AES", "nohide":true};
+        var keystore3 = { "keyname":"FetionCookie"+args.accountId, "keydata":B64cookie, "type":"AES", "nohide":true};
+        localCall("palm://com.palm.keymanager","store",keystore1,function(f1){
+            if(f1.returnValue){
+                localCall("palm://com.palm.keymanager","store",keystore2,function(f2){
+                    if(f2.returnValue){
+                        localCall("palm://com.palm.keymanager","store",keystore3,function(f3){
+                            future.result = f3;
+                        });
+                    }else{
+                        future.result = f2;
+                    }
+                });
+            }else{
+                future.result = f1;
+            }
         });
     }
 });
@@ -160,9 +189,26 @@ var onCreate = Class.create({
 var onDelete = Class.create({
     run:function (future) {
         var args = this.controller.args;
-        console.log("onDelete", JSON.stringify(args));
-        DB.del({ from:"com.ericblade.synergy.loginstate:1" }).then(function (fut) {
-            future.result = f.result
+        var q ={ "query":{ "from":IM_LOGINSTATE_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
+        var q2 ={ "query":{ "from":IM_MESSAGE_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
+        var q3 ={ "query":{ "from":IM_COMMAND_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
+        localCall("palm://com.palm.db/","del",q,function(f1){
+            console.log("del loginstate",f1);
+            if(f1.returnValue){
+                localCall("palm://com.palm.db/","del",q2,function(f2){
+                    console.log("del immessage",f2);
+                    if(f2.returnValue){
+                        localCall("palm://com.palm.db/","del",q3,function(f3){
+                            console.log("del imcommand",f3);
+                            future.result=f3;
+                        });
+                    }else{
+                        future.result = f2;
+                    }
+                });
+            }else{
+                future.result = f1;
+            }
         });
     }
 });
@@ -219,7 +265,7 @@ var sendCommand = Class.create({
         console.log("sendCommand", JSON.stringify(args));
 
         var query = {
-            from:"com.ericblade.synergy.imcommand:1",
+            from:"cn.xuepx.fetion.imcommand:1",
             where:[
                 { "prop":"status", "op":"=", "val":"pending" }
             ]
@@ -260,7 +306,7 @@ var sendCommand = Class.create({
 // Otherwise, syncing should be disabled and associated data deleted.
 // Account-wide configuration should remain and only be deleted when onDelete is called.
 // onEnabled args should be like { accountId: "++Mhsdkfj", enabled: true }
-// 
+//
 // TODO: This function is a total mess, and should be re-written for the example.
 // In SynerGV, this function is where we turn on and off the various database watches.
 
@@ -270,84 +316,85 @@ var sendCommand = Class.create({
 
 var onEnabled = Class.create({
     run:function (future) {
-        var args = this.controller.args;
-
-        console.log("onEnabledAssistant args.enabled=", args.enabled);
-
-        if (!args.enabled) {
-            // cancel our sync activity, and remove the entry from the messaging loginstates,
-            // so we no longer show up in the app
-            var stopSync = PalmCall.call("palm://com.ericblade.synergy.service/", "cancelActivity", { accountId:args.accountId }).then(function (f) {
-                DB.del({ from:"com.ericblade.synergy.loginstate:1" });
-            });
-        }
-        else {
-            // Create an object to insert into the database, so that the messaging app
-            // knows that we exist.
-            var loginStateRec = {
-                "objects":[
-                    {
-                        _kind:"com.ericblade.synergy.loginstate:1",
-                        // TODO: we should pull this from the account template.. how?
-                        serviceName:"type_synergy",
-                        accountId:args.accountId,
-                        username:"blade.eric",
-                        state:"online", // it doesn't -seem- to matter what i put here, there may be another parameter involved
-                        availability:1
-                    }
-                ]
-            };
-
-            // And then start an Activity to organize our syncing
-
-            PalmCall.call("palm://com.palm.db/", "put", loginStateRec).then(function (f) {
-                var startSync = PalmCall.call("palm://com.palm.activitymanager/", "create",
-                    {
-                        start:true,
-                        activity:{
-                            name:"SynergyOutgoingSync:" + args.accountId,
-                            description:"Synergy Pending Messages Watch",
-                            type:{
-                                foreground:true,
-                                power:true,
-                                powerDebounce:true,
-                                explicit:true,
-                                persist:true
-                            },
-                            requirements:{
-                                internet:true
-                            },
-                            trigger:{
-                                method:"palm://com.palm.db/watch",
-                                key:"fired",
-                                params:{
-                                    subscribe:true,
-                                    query:{
-                                        from:"com.ericblade.synergy.immessage:1",
-                                        where:[
-                                            { prop:"status", op:"=", val:"pending" },
-                                            { prop:"folder", op:"=", val:"outbox" }
-                                            // TODO: Grab the username from somewhere, and insert it here
-                                            /*{ prop: "serviceName", op: "=", val: "type_synergy" },
-                                             { prop: "userName", op: "=", val: TODO GET USERNAME FROM SOMEWHERE },*/
-                                        ],
-                                        limit:1
-                                    }
-                                }
-                            },
-                            callback:{
-                                method:"palm://com.ericblade.synergy.service/sync",
-                                params:{}
-                            }
-                        }
-                    });
-            });
-        }
-
-        (args.enabled ? startSync : stopSync).then(function (activityFuture) {
-            console.log("activityFuture", (args.enabled ? "start" : "stop"), " result=", JSON.stringify(activityFuture.result));
-            future.result = { returnValue:true };
-        });
+//        var args = this.controller.args;
+//
+//        console.log("onEnabledAssistant args.enabled=", args.enabled);
+//
+//        if (!args.enabled) {
+//            // cancel our sync activity, and remove the entry from the messaging loginstates,
+//            // so we no longer show up in the app
+//            var stopSync = PalmCall.call("palm://com.ericblade.synergy.service/", "cancelActivity", { accountId:args.accountId }).then(function (f) {
+//                DB.del({ from:"cn.xuepx.fetion.loginstate:1" });
+//            });
+//        }
+//        else {
+//            // Create an object to insert into the database, so that the messaging app
+//            // knows that we exist.
+//            var loginStateRec = {
+//                "objects":[
+//                    {
+//                        _kind:"cn.xuepx.fetion.loginstate:1",
+//                        // TODO: we should pull this from the account template.. how?
+//                        serviceName:"type_synergy",
+//                        accountId:args.accountId,
+//                        username:"blade.eric",
+//                        state:"online", // it doesn't -seem- to matter what i put here, there may be another parameter involved
+//                        availability:1
+//                    }
+//                ]
+//            };
+//
+//            // And then start an Activity to organize our syncing
+//
+//            PalmCall.call("palm://com.palm.db/", "put", loginStateRec).then(function (f) {
+//                var startSync = PalmCall.call("palm://com.palm.activitymanager/", "create",
+//                    {
+//                        start:true,
+//                        activity:{
+//                            name:"SynergyOutgoingSync:" + args.accountId,
+//                            description:"Synergy Pending Messages Watch",
+//                            type:{
+//                                foreground:true,
+//                                power:true,
+//                                powerDebounce:true,
+//                                explicit:true,
+//                                persist:true
+//                            },
+//                            requirements:{
+//                                internet:true
+//                            },
+//                            trigger:{
+//                                method:"palm://com.palm.db/watch",
+//                                key:"fired",
+//                                params:{
+//                                    subscribe:true,
+//                                    query:{
+//                                        from:"cn.xuepx.fetion.immessage:1",
+//                                        where:[
+//                                            { prop:"status", op:"=", val:"pending" },
+//                                            { prop:"folder", op:"=", val:"outbox" }
+//                                            // TODO: Grab the username from somewhere, and insert it here
+//                                            /*{ prop: "serviceName", op: "=", val: "type_synergy" },
+//                                             { prop: "userName", op: "=", val: TODO GET USERNAME FROM SOMEWHERE },*/
+//                                        ],
+//                                        limit:1
+//                                    }
+//                                }
+//                            },
+//                            callback:{
+//                                method:"palm://com.ericblade.synergy.service/sync",
+//                                params:{}
+//                            }
+//                        }
+//                    });
+//            });
+//        }
+//
+//        (args.enabled ? startSync : stopSync).then(function (activityFuture) {
+//            console.log("activityFuture", (args.enabled ? "start" : "stop"), " result=", JSON.stringify(activityFuture.result));
+//            future.result = { returnValue:true };
+//        });
+        future.result = { returnValue:true };
     }
 });
 
@@ -409,7 +456,7 @@ var startActivity = Class.create({
                         params:{
                             subscribe:true,
                             query:{
-                                from:"com.ericblade.synergy.immessage:1",
+                                from:"cn.xuepx.fetion.immessage:1",
                                 where:[
                                     { prop:"status", op:"=", val:"pending" },
                                     { prop:"folder", op:"=", val:"outbox" }
@@ -458,7 +505,7 @@ var completeActivity = Class.create({
                 method:"palm://com.palm.db/watch",
                 params:{
                     query:{
-                        from:"com.ericblade.synergy.immessage:1",
+                        from:"cn.xuepx.fetion.immessage:1",
                         where:[
                             { "prop":"folder", "op":"=", "val":"outbox" },
                             { "prop":"status", "op":"=", "val":"pending" }
@@ -509,7 +556,7 @@ var sync = Class.create({
         console.log("sync run start");
         var f = new Future();
         var query = {
-            from:"com.ericblade.synergy.immessage:1",
+            from:"cn.xuepx.fetion.immessage:1",
             where:[
                 { "prop":"folder", "op":"=", "val":"outbox" },
                 { "prop":"status", "op":"=", "val":"pending" }
@@ -567,7 +614,7 @@ var sync = Class.create({
                 method:"palm://com.palm.db/watch",
                 params:{
                     query:{
-                        from:"com.ericblade.synergy.immessage:1",
+                        from:"cn.xuepx.fetion.immessage:1",
                         where:[
                             { "prop":"folder", "op":"=", "val":"outbox" },
                             { "prop":"status", "op":"=", "val":"pending" }

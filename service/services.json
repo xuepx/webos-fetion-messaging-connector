@@ -1,12 +1,12 @@
 {
-    "id":"com.ericblade.synergy.service",
-    "description":"Synergy Service",
+    "id":"cn.xuepx.fetion.service",
+    "description":"Fetion Synergy Service",
     "engine":"node",
     "activityTimeout":30,
     "services":[
         {
-            "name":"com.ericblade.synergy.service",
-            "description":"Synergy Service",
+            "name":"cn.xuepx.fetion.service",
+            "description":"Fetion Synergy Service",
             "globalized":false,
             "commands":[
                 {
@@ -16,6 +16,7 @@
                 },
                 {
                     "name":"onCreate",
+
                     "assistant":"onCreate",
                     "public":true
                 },

@@ -1,39 +1,48 @@
 {
-    "templateId"            : "com.ericblade.synergy.account",
-    "loc_name"              : "Synergy Messaging",
-    "hidden"                : false,
-    "invisible"             : false,
-    "icon"                  : { "loc_32x32": "images/gvoice32.png", "loc_48x48": "images/gvoice48.png", "splitter": "images/gvoice32.png" },
-    "readPermissions"       : [ "com.ericblade.synergy", "com.palm.app.messaging", "com.palm.app.phone" ],
-    "writePermissions"      : [ "com.ericblade.synergy", "com.palm.app.messaging", "com.palm.app.phone" ],
-    "validator"		    : "palm://com.ericblade.synergy.service/checkCredentials",
-    "capabilityProviders"   : [
-                                { "id":"com.ericblade.synergy.account.im",
-                                  "alwaysOn": false,
-                                  "sync": "palm://com.ericblade.synergy.service/sync",
-                                  "loc_name": "Google Voice",
-                                  "loc_shortName": "GVoice",
-                                  "capability":"MESSAGING",
-                                  "capabilitySubtype": "IM",
-                                  "serviceName":"type_synergy",
-                                  "supportsInvisibleStatus": false,
-                                  "implementation": "palm://com.ericblade.synergy.service/",
-								  "onCreate": "palm://com.ericblade.synergy.service/onCreate",
-                                  "onEnabled": "palm://com.ericblade.synergy.service/onEnabled",
-								  "onDelete": "palm://com.ericblade.synergy.service/onDelete",
-                                  "onCredentialsChanged": "palm://com.ericblade.synergy.service/onCredentialsChanged",
-                                  "onCapabilitiesChanged": "palm://com.ericblade.synergy.service/onCapabilitiesChanged",
-                                  "loginStateChanged": "palm://com.ericblade.synergy.service/loginStateChanged",
-                                  "sendIM": "palm://com.ericblade.synergy.service/sendIM",
-                                  "sendCommand": "palm://com.ericblade.synergy.service/sendCommand",
-                                  "chatWithNonBuddies": true,
-                                  "readOnlyData": false,
-                                  "icon": { "loc_32x32": "images/gvoice32.png", "loc_48x48": "images/gvoice48.png", "splitter": "images/gvoice32.png" },
-                                  "dbkinds": {
-                                    "immessage": "com.ericblade.synergy.immessage:1",
-                                    "imloginstate": "com.ericblade.synergy.loginstate:1",
-                                    "imcommand": "com.ericblade.synergy.imcommand:1"
-                                  }
-                                }
-                               ]
+    "templateId":"cn.xuepx.fetion.account",
+    "loc_name":"飞信",
+    "hidden":false,
+    "invisible":false,
+    "icon":{
+        "loc_32x32":"images/fetion32.png",
+        "loc_48x48":"images/fetion48.png",
+        "splitter":"images/fetion32.png"
+    },
+    "readPermissions":[ "cn.xuepx.fetion", "com.palm.app.messaging", "com.palm.app.phone" ],
+    "writePermissions":[ "cn.xuepx.fetion", "com.palm.app.messaging", "com.palm.app.phone" ],
+    "validator":"palm://cn.xuepx.fetion.service/checkCredentials",
+    "capabilityProviders":[
+        {
+            "id":"cn.xuepx.fetion.account.im",
+            "alwaysOn":false,
+            "sync":"palm://cn.xuepx.fetion.service/sync",
+            "loc_name":"飞信",
+            "loc_shortName":"飞信",
+            "capability":"MESSAGING",
+            "capabilitySubtype":"IM",
+            "serviceName":"type_fetion",
+            "supportsInvisibleStatus":false,
+            "implementation":"palm://cn.xuepx.fetion.service/",
+            "onCreate":"palm://cn.xuepx.fetion.service/onCreate",
+            "onEnabled":"palm://cn.xuepx.fetion.service/onEnabled",
+            "onDelete":"palm://cn.xuepx.fetion.service/onDelete",
+            "onCredentialsChanged":"palm://cn.xuepx.fetion.service/onCredentialsChanged",
+            "onCapabilitiesChanged":"palm://cn.xuepx.fetion.service/onCapabilitiesChanged",
+            "loginStateChanged":"palm://cn.xuepx.fetion.service/loginStateChanged",
+            "sendIM":"palm://cn.xuepx.fetion.service/sendIM",
+            "sendCommand":"palm://cn.xuepx.fetion.service/sendCommand",
+            "chatWithNonBuddies":true,
+            "readOnlyData":false,
+            "icon":{
+                "loc_32x32":"images/fetion32.png",
+                "loc_48x48":"images/fetion48.png",
+                "splitter":"images/fetion32.png"
+            },
+            "dbkinds":{
+                "immessage":"cn.xuepx.fetion.immessage:1",
+                "imloginstate":"cn.xuepx.fetion.loginstate:1",
+                "imcommand":"cn.xuepx.fetion.imcommand:1"
+            }
+        }
+    ]
 }
