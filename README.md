@@ -9,4 +9,6 @@
 
 ### synergy messaging connector(doing)
 
+# ipk is not Useable!
+
 
