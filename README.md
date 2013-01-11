@@ -5,11 +5,8 @@
 
 ## To do:
 
-### Fetion API
+### Fetion API(done)
 
-#### Login (done)
-#### getGroup (done)
-#### getList (done)
-#### synergy contact(doing)
+### synergy messaging connector(doing)
 
 
