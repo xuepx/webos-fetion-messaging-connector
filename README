@@ -1,4 +1,5 @@
-A template for building a webOS Synergy Messaging connector.
+#Fetion-messaging-connector
 
-This is pretty rough at the moment, but the service is completely functional.
+Fork from ericblade/webOS-messaging-connector
 
+##webOS Fetion Synergy Messaging connector.
