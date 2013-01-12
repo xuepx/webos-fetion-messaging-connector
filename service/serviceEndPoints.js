@@ -162,21 +162,21 @@ var onCreate = Class.create({
         var B64username = Base64.encode(args.config.username);
         var B64password = Base64.encode(args.config.password);
         var B64cookie = Base64.encode(args.config.cookies);
-        var keystore1 = { "keyname":"FetionUsername"+args.accountId, "keydata":B64username, "type":"AES", "nohide":true};
-        var keystore2 = { "keyname":"FetionPassword"+args.accountId, "keydata":B64password, "type":"AES", "nohide":true};
-        var keystore3 = { "keyname":"FetionCookie"+args.accountId, "keydata":B64cookie, "type":"AES", "nohide":true};
-        localCall("palm://com.palm.keymanager","store",keystore1,function(f1){
-            if(f1.returnValue){
-                localCall("palm://com.palm.keymanager","store",keystore2,function(f2){
-                    if(f2.returnValue){
-                        localCall("palm://com.palm.keymanager","store",keystore3,function(f3){
+        var keystore1 = { "keyname":"FetionUsername" + args.accountId, "keydata":B64username, "type":"AES", "nohide":true};
+        var keystore2 = { "keyname":"FetionPassword" + args.accountId, "keydata":B64password, "type":"AES", "nohide":true};
+        var keystore3 = { "keyname":"FetionCookie" + args.accountId, "keydata":B64cookie, "type":"AES", "nohide":true};
+        localCall("palm://com.palm.keymanager", "store", keystore1, function (f1) {
+            if (f1.returnValue) {
+                localCall("palm://com.palm.keymanager", "store", keystore2, function (f2) {
+                    if (f2.returnValue) {
+                        localCall("palm://com.palm.keymanager", "store", keystore3, function (f3) {
                             future.result = f3;
                         });
-                    }else{
+                    } else {
                         future.result = f2;
                     }
                 });
-            }else{
+            } else {
                 future.result = f1;
             }
         });
@@ -189,24 +189,24 @@ var onCreate = Class.create({
 var onDelete = Class.create({
     run:function (future) {
         var args = this.controller.args;
-        var q ={ "query":{ "from":IM_LOGINSTATE_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
-        var q2 ={ "query":{ "from":IM_MESSAGE_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
-        var q3 ={ "query":{ "from":IM_COMMAND_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
-        localCall("palm://com.palm.db/","del",q,function(f1){
-            console.log("del loginstate",f1);
-            if(f1.returnValue){
-                localCall("palm://com.palm.db/","del",q2,function(f2){
-                    console.log("del immessage",f2);
-                    if(f2.returnValue){
-                        localCall("palm://com.palm.db/","del",q3,function(f3){
-                            console.log("del imcommand",f3);
-                            future.result=f3;
+        var q = { "query":{ "from":IM_LOGINSTATE_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
+        var q2 = { "query":{ "from":IM_MESSAGE_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
+        var q3 = { "query":{ "from":IM_COMMAND_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
+        localCall("palm://com.palm.db/", "del", q, function (f1) {
+            console.log("del loginstate", f1);
+            if (f1.returnValue) {
+                localCall("palm://com.palm.db/", "del", q2, function (f2) {
+                    console.log("del immessage", f2);
+                    if (f2.returnValue) {
+                        localCall("palm://com.palm.db/", "del", q3, function (f3) {
+                            console.log("del imcommand", f3);
+                            future.result = f3;
                         });
-                    }else{
+                    } else {
                         future.result = f2;
                     }
                 });
-            }else{
+            } else {
                 future.result = f1;
             }
         });
@@ -316,33 +316,49 @@ var sendCommand = Class.create({
 
 var onEnabled = Class.create({
     run:function (future) {
-//        var args = this.controller.args;
-//
-//        console.log("onEnabledAssistant args.enabled=", args.enabled);
-//
-//        if (!args.enabled) {
-//            // cancel our sync activity, and remove the entry from the messaging loginstates,
-//            // so we no longer show up in the app
-//            var stopSync = PalmCall.call("palm://com.ericblade.synergy.service/", "cancelActivity", { accountId:args.accountId }).then(function (f) {
-//                DB.del({ from:"cn.xuepx.fetion.loginstate:1" });
+        var args = this.controller.args;
+
+        console.log("onEnabledAssistant args.enabled=", args.enabled);
+
+        if (args.enabled === false) {
+            // cancel our sync activity, and remove the entry from the messaging loginstates,
+            // so we no longer show up in the app
+            adoptActivity(args.accountId);
+            future.result = { returnValue:true };
+//            localCall("palm://com.palm.db/", "del", {"query":{"from":"cn.xuepx.fetion.imloginstate:1" }}, function (f2) {
+//                future.result = f2;
 //            });
-//        }
-//        else {
+        }
+        else {
 //            // Create an object to insert into the database, so that the messaging app
 //            // knows that we exist.
-//            var loginStateRec = {
-//                "objects":[
-//                    {
-//                        _kind:"cn.xuepx.fetion.loginstate:1",
-//                        // TODO: we should pull this from the account template.. how?
-//                        serviceName:"type_synergy",
-//                        accountId:args.accountId,
-//                        username:"blade.eric",
-//                        state:"online", // it doesn't -seem- to matter what i put here, there may be another parameter involved
-//                        availability:1
-//                    }
-//                ]
-//            };
+            var loginStateRec = {
+                "objects":[
+                    {
+                        _kind:"cn.xuepx.fetion.imloginstate:1",
+                        serviceName:IM_Fetion_TYPE,
+                        accountId:args.accountId,
+                        username:"xuepx",
+                        state:"online", // it doesn't -seem- to matter what i put here, there may be another parameter involved
+                        availability:1
+                    }
+                ]
+            };
+            localCall("palm://com.palm.db/", "put", loginStateRec,function(f){
+                future.result = { returnValue:true };
+                if(f.returnValue===true){
+                    localCall("palm://cn.xuepx.fetion.service", "startActivity", args,function(f2){
+                        if(f2.returnValue===true){
+                            future.result = { returnValue:true };
+                        }else{
+                            future.result = { returnValue:false };
+                        }
+                    });
+                    future.result = { returnValue:true };
+                }else{
+                    future.result = { returnValue:false };
+                }
+            });
 //
 //            // And then start an Activity to organize our syncing
 //
@@ -394,7 +410,7 @@ var onEnabled = Class.create({
 //            console.log("activityFuture", (args.enabled ? "start" : "stop"), " result=", JSON.stringify(activityFuture.result));
 //            future.result = { returnValue:true };
 //        });
-        future.result = { returnValue:true };
+        }
     }
 });
 
@@ -434,12 +450,12 @@ var onEnabled = Class.create({
 var startActivity = Class.create({
     run:function (activityFuture) {
         var args = this.controller.args;
-        PalmCall.call("palm://com.palm.activitymanager/", "create",
+        localCall("palm://com.palm.activitymanager/", "create",
             {
                 start:true,
                 activity:{
-                    name:"SynergyOutgoingSync:" + args.accountId,
-                    description:"Synergy Pending Messages Watch",
+                    name:"FetionOutgoingSync", // + args.accountId,
+                    description:"Fetion Pending Messages Watch",
                     type:{
                         foreground:true,
                         power:true,
@@ -466,36 +482,37 @@ var startActivity = Class.create({
                         }
                     },
                     callback:{
-                        method:"palm://com.ericblade.synergy.service/sync",
+                        method:"palm://cn.xuepx.fetion.service/sync",
                         params:{}
                     }
                 }
-            }).then(function (f) {
-                console.log("startActivity result=", JSON.stringify(f.result));
-                activityFuture.result = f.result;
-            });
+            }, function (f) {
+                console.log("startActivity result=", JSON.stringify(f));
+                activityFuture.result = f;
+            }
+        );
     }
 });
-
-var adoptActivity = Class.create({
-    run:function (adoptFuture) {
-        var args = this.controller.args;
-        PalmCall.call("palm://com.palm.activitymanager/", "adopt", {
-            activityName:"SynergyOutgoingSync:" + args.accountId,
-            wait:true,
-            subscribe:true
-        }).then(function (f) {
-                console.log("adoptActivity result", JSON.stringify(f.result));
-                adoptFuture.result = f.result;
-            });
-    }
-});
+var adoptActivity = function (accountId) {
+    //var args = this.controller.args;
+    localCall("palm://com.palm.activitymanager/", "adopt", {
+        activityName:"FetionOutgoingSync", // + accountId,
+        wait:true,
+        subscribe:true
+    }, function (f) {
+        if (f.returnValue === true) {
+            adoptFuture.result = {returnValue:true};
+        } else {
+            adoptFuture.result = {returnValue:false};
+        }
+    });
+}
 
 var completeActivity = Class.create({
     run:function (completeFuture) {
         var args = this.controller.args;
         PalmCall.call("palm://com.palm.activitymanager/", "complete", {
-            activityName:"SynergyOutgoingSync:" + args.accountId,
+            activityName:"FetionOutgoingSync", // + args.accountId,
             restart:true,
             // the docs say you shouldn't need to specify the trigger and callback conditions again, i think..
             // someone else said reset the callback to a different function .. to avoid the "Temporarily Not Available" problem
@@ -525,7 +542,7 @@ var cancelActivity = Class.create({
     run:function (cancelFuture) {
         var args = this.controller.args;
         PalmCall.call("palm://com.palm.activitymanager/", "cancel", {
-            activityName:"SynergyOutgoingSync:" + args.accountId
+            activityName:"SynergyOutgoingSync"// + args.accountId
         }).then(function (f) {
                 cancelFuture.result = f.result;
             });
@@ -552,82 +569,83 @@ var sync = Class.create({
         return future;
     },
     run:function (syncFuture) {
-        var args = this.controller.args;
-        console.log("sync run start");
-        var f = new Future();
-        var query = {
-            from:"cn.xuepx.fetion.immessage:1",
-            where:[
-                { "prop":"folder", "op":"=", "val":"outbox" },
-                { "prop":"status", "op":"=", "val":"pending" }
-                // TODO: add serviceName and userName to this query
-            ]
-        };
-
-        f.now(function (future) {
-            console.log("setting alarm");
-            f.nest(PalmCall.call("palm://com.palm.power/timeout/", "set", {
-                key:"com.ericblade.synergy.synctimer",
-                "in":"00:05:00",
-                uri:"palm://com.ericblade.synergy.service/sync",
-                params:"{}"
-            }).then(function (postAlarmFuture) {
-                    console.log("alarm set result", JSON.stringify(postAlarmFuture.result));
-                }));
-            future.nest(DB.find(query, false, false).then(function (dbFuture) {
-                console.log("dbFuture result=", JSON.stringify(dbFuture.result));
-                var dbResult = dbFuture.result;
-                if (dbResult.results) {
-                    var mergeIDs = [ ];
-                    // Call our sendIM service function to actually send each message
-                    // Record each message ID into an array, and then update them in
-                    // the database as "successful", ie - sent.
-                    // You may want to not mark them as sent in the database until they
-                    // are actually sent via your sendIM function, though.
-                    for (var x = 0; x < dbResult.results.length; x++) {
-                        console.log("Merging status of ", dbResult.results[x]["_id"]);
-                        PalmCall.call("palm://com.ericblade.synergy.service/", "sendIM", {
-                            to:dbResult.results[x].to[0].addr,
-                            text:dbResult.results[x].messageText
-                        });
-                        mergeIDs.push({ "_id":dbResult.results[x]["_id"], "status":"successful" });
-                    }
-                    DB.merge(mergeIDs);
-                }
-                syncFuture.result = { returnValue:true };
-            }));
-        });
+//        var args = this.controller.args;
+//        console.log("sync run start");
+//        var f = new Future();
+//        var query = {
+//            from:"cn.xuepx.fetion.immessage:1",
+//            where:[
+//                { "prop":"folder", "op":"=", "val":"outbox" },
+//                { "prop":"status", "op":"=", "val":"pending" }
+//                // TODO: add serviceName and userName to this query
+//            ]
+//        };
+//
+//        f.now(function (future) {
+//            console.log("setting alarm");
+//            f.nest(PalmCall.call("palm://com.palm.power/timeout/", "set", {
+//                key:"com.ericblade.synergy.synctimer",
+//                "in":"00:05:00",
+//                uri:"palm://com.ericblade.synergy.service/sync",
+//                params:"{}"
+//            }).then(function (postAlarmFuture) {
+//                    console.log("alarm set result", JSON.stringify(postAlarmFuture.result));
+//                }));
+//            future.nest(DB.find(query, false, false).then(function (dbFuture) {
+//                console.log("dbFuture result=", JSON.stringify(dbFuture.result));
+//                var dbResult = dbFuture.result;
+//                if (dbResult.results) {
+//                    var mergeIDs = [ ];
+//                    // Call our sendIM service function to actually send each message
+//                    // Record each message ID into an array, and then update them in
+//                    // the database as "successful", ie - sent.
+//                    // You may want to not mark them as sent in the database until they
+//                    // are actually sent via your sendIM function, though.
+//                    for (var x = 0; x < dbResult.results.length; x++) {
+//                        console.log("Merging status of ", dbResult.results[x]["_id"]);
+//                        PalmCall.call("palm://com.ericblade.synergy.service/", "sendIM", {
+//                            to:dbResult.results[x].to[0].addr,
+//                            text:dbResult.results[x].messageText
+//                        });
+//                        mergeIDs.push({ "_id":dbResult.results[x]["_id"], "status":"successful" });
+//                    }
+//                    DB.merge(mergeIDs);
+//                }
+//                syncFuture.result = { returnValue:true };
+//            }));
+//        });
     },
     complete:function () {
-        var args = this.controller.args;
-        var activity = args.$activity;
-        console.log("sync complete starting");
-        return activity && PalmCall.call("palm://com.palm.activitymanager/", "complete", {
-            //activityName: "SynergyOutgoingSync",
-            activityId:activity.activityId,
-            restart:true,
-            // the docs say you shouldn't need to specify the trigger and callback conditions again, i think..
-            // someone else said reset the callback to a different function .. to avoid the "Temporarily Not Available" problem
-            // other people say you do. so let's try it.
-            trigger:{
-                key:"fired",
-                method:"palm://com.palm.db/watch",
-                params:{
-                    query:{
-                        from:"cn.xuepx.fetion.immessage:1",
-                        where:[
-                            { "prop":"folder", "op":"=", "val":"outbox" },
-                            { "prop":"status", "op":"=", "val":"pending" }
-                            // TODO: add serviceName and userName here
-                        ],
-                        limit:1
-                    },
-                    subscribe:true
-                }
-            }
-        }).then(function (f) {
-                console.log("sync complete completed", JSON.stringify(f.result));
-                f.result = { returnValue:true };
-            })
+//        var args = this.controller.args;
+//        var activity = args.$activity;
+//        console.log("sync complete starting");
+//        return activity && PalmCall.call("palm://com.palm.activitymanager/", "complete", {
+//            //activityName: "SynergyOutgoingSync",
+//            activityId:activity.activityId,
+//            restart:true,
+//            // the docs say you shouldn't need to specify the trigger and callback conditions again, i think..
+//            // someone else said reset the callback to a different function .. to avoid the "Temporarily Not Available" problem
+//            // other people say you do. so let's try it.
+//            trigger:{
+//                key:"fired",
+//                method:"palm://com.palm.db/watch",
+//                params:{
+//                    query:{
+//                        from:"cn.xuepx.fetion.immessage:1",
+//                        where:[
+//                            { "prop":"folder", "op":"=", "val":"outbox" },
+//                            { "prop":"status", "op":"=", "val":"pending" }
+//                            // TODO: add serviceName and userName here
+//                        ],
+//                        limit:1
+//                    },
+//                    subscribe:true
+//                }
+//            }
+//        }).then(function (f) {
+//                console.log("sync complete completed", JSON.stringify(f.result));
+//                f.result = { returnValue:true };
+//            }
+//        )
     }
 })

@@ -3,16 +3,16 @@ enyo.kind({
 	kind: enyo.VFlexBox,
 
 	components: [
-		{ name: "credService", kind: "PalmService", service: "palm://com.ericblade.synergy.service/", method: "checkCredentials", onSuccess: "credSuccess", onFailure: "credFailure" },
-		{ name: "syncService", kind: "PalmService", service: "palm://com.ericblade.synergy.service/", method: "sync", onSuccess: "syncSuccess", onFailure: "syncFailure" },
-		{ name: "createAccount", kind: "PalmService", service: "palm://com.ericblade.synergy.service/", method: "onCreate", onSuccess: "createSuccess", onFailure: "createFailure" },
-		{ name: "disenableAccountCap", kind: "PalmService", service: "palm://com.ericblade.synergy.service/", method: "onEnabled", onSuccess: "enabledSuccess", onFailure: "enabledFailure" },
-		{ name: "deleteAccount", kind: "PalmService", service: "palm://com.ericblade.synergy.service/", method: "onDelete", onSuccess: "deletedSuccess", onFailure: "deletedFailure" },
-		{ name: "startActivity", kind: "PalmService", service: "palm://com.ericblade.synergy.service/", method: "startActivity", onSuccess: "startSuccess", onFailure: "startFailure" },
-		{ name: "adoptActivity", kind: "PalmService", service: "palm://com.ericblade.synergy.service/", method: "adoptActivity", onSuccess: "adoptSuccess", onFailure: "adoptFailure" },
-		{ name: "completeActivity", kind: "PalmService", service: "palm://com.ericblade.synergy.service/", method: "completeActivity", onSuccess: "completeSuccess", onFailure: "completeFailure" },
+		{ name: "credService", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "checkCredentials", onSuccess: "credSuccess", onFailure: "credFailure" },
+		{ name: "syncService", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "sync", onSuccess: "syncSuccess", onFailure: "syncFailure" },
+		{ name: "createAccount", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "onCreate", onSuccess: "createSuccess", onFailure: "createFailure" },
+		{ name: "disenableAccountCap", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "onEnabled", onSuccess: "enabledSuccess", onFailure: "enabledFailure" },
+		{ name: "deleteAccount", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "onDelete", onSuccess: "deletedSuccess", onFailure: "deletedFailure" },
+		{ name: "startActivity", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "startActivity", onSuccess: "startSuccess", onFailure: "startFailure" },
+		{ name: "adoptActivity", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "adoptActivity", onSuccess: "adoptSuccess", onFailure: "adoptFailure" },
+		{ name: "completeActivity", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "completeActivity", onSuccess: "completeSuccess", onFailure: "completeFailure" },
 		{kind: "PageHeader", components: [
-			{content: "Synegy Messaging Connector Test Panel"}
+			{content: "Fetion Messaging Connector Test Panel"}
 		]},
 		{ name: "Results" },
 		{flex: 1, kind: "Pane", components: [
@@ -23,7 +23,7 @@ enyo.kind({
 						{ name: "credUser", kind: "Input" },
 						{ content: "Password" },
 						{ name: "credPass", kind: "Input" },
-						{ kind: "Button", label: "Check Credentials", onclick: "checkCredentials" },
+						{ kind: "Button", label: "Check Credentials", onclick: "checkCredentials" }
 					]}
 				]},
 				{ kind: "Group", label: "Accounts", components: [
@@ -32,16 +32,16 @@ enyo.kind({
 					{ kind: "Button", label: "onCreate", onclick: "callCreate" },
 					{ kind: "Button", label: "onEnabled (enabled)", onclick: "callEnabled" },
 					{ kind: "Button", label: "onEnabled (disabled)", onclick: "callDisabled" },
-					{ kind: "Button", label: "onDelete", onclick: "callDelete" },
+					{ kind: "Button", label: "onDelete", onclick: "callDelete" }
 				]},
 				{ kind: "Group", label: "Misc", components: [
 					{ kind: "Button", label: "Sync", onclick: "sync" },
 					{ kind: "Button", label: "startActivity", onclick: "startActivity" },
 					{ kind: "Button", label: "adoptActivity", onclick: "adoptActivity" },
-					{ kind: "Button", label: "completeActivity", onclick: "completeActivity" },
+					{ kind: "Button", label: "completeActivity", onclick: "completeActivity" }
 				]}
 			]}
-		]},
+		]}
 	],
 	// TODO: These should call these test functions with some useful parameters..
 	startActivity: function(inSender, inEvent) { this.$.startActivity.call({ }); },

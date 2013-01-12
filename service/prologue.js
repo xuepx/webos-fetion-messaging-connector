@@ -167,11 +167,7 @@ var localCall = function (service, method, params, callBack) {
     );
 };
 
-var PALM_PERSON = "com.palm.person:1";
-var IM_PREFIX = "cn.xuepx.fetion";
-var TRANSPORT_KIND = "cn.xuepx.fetion.loginstate:1";
-var IM_CONTACT_KIND = "cn.xuepx.fetion.imcontact:1";
-var IM_LOGINSTATE_KIND = "cn.xuepx.fetion.loginstate:1";
+var IM_LOGINSTATE_KIND = "cn.xuepx.fetion.imloginstate:1";
 var IM_MESSAGE_KIND = "cn.xuepx.fetion.immessage:1";
 var KIND_PREFIX = "cn.xuepx.*";
 var IM_COMMAND_KIND = "cn.xuepx.fetion.imcommand:1";

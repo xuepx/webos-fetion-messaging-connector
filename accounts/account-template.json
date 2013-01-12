@@ -1,16 +1,18 @@
 {
     "templateId":"cn.xuepx.fetion.account",
     "loc_name":"飞信",
-    "hidden":false,
-    "invisible":false,
+    "loc_usernameLabel":"手机号",
+    "loc_passwordLabel":"密码",
     "icon":{
         "loc_32x32":"images/fetion32.png",
         "loc_48x48":"images/fetion48.png",
         "splitter":"images/fetion32.png"
     },
+    "hidden":false,
+    "invisible":false,
+    "validator":"palm://cn.xuepx.fetion.service/checkCredentials",
     "readPermissions":[ "cn.xuepx.fetion", "com.palm.app.messaging", "com.palm.app.phone" ],
     "writePermissions":[ "cn.xuepx.fetion", "com.palm.app.messaging", "com.palm.app.phone" ],
-    "validator":"palm://cn.xuepx.fetion.service/checkCredentials",
     "capabilityProviders":[
         {
             "id":"cn.xuepx.fetion.account.im",
@@ -40,7 +42,7 @@
             },
             "dbkinds":{
                 "immessage":"cn.xuepx.fetion.immessage:1",
-                "imloginstate":"cn.xuepx.fetion.loginstate:1",
+                "imloginstate":"cn.xuepx.fetion.imloginstate:1",
                 "imcommand":"cn.xuepx.fetion.imcommand:1"
             }
         }

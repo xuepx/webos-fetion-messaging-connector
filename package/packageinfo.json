@@ -1,10 +1,10 @@
 {
     "id": "cn.xuepx.fetion",
     "package_format_version": 2,
-    "loc_name": "Synergy",
+    "loc_name": "飞信",
     "version": "1.0.0",
-    "vendor": "Eric Blade",
-    "vendorurl": "http://www.ericbla.de/gvoice-webos/",
+    "vendor": "xuepx",
+    "vendorurl": "http://www.xuepx.cn/",
     "app": "cn.xuepx.fetion",
     "services": [ "cn.xuepx.fetion.service" ],
     "accounts": [ "cn.xuepx.fetion.account" ]

@@ -1,10 +1,10 @@
 {
 	"id": "cn.xuepx.fetion",
 	"version": "1.0.0",
-	"vendor": "Eric Blade",
+	"vendor": "xuepx",
 	"type": "web",
 	"main": "index.html",
-	"title": "Synergy",
+	"title": "飞信",
 	"icon": "icon.png",
 	"uiRevision":2
 }
