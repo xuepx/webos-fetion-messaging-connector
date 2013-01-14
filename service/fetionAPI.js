@@ -308,21 +308,25 @@ var getNewMsg = function (cookies, callback) {
         }
         return false;
     }
-    AjaxPost(host, newmsgPath, {}, cookies, function (inResponse) {
-        if (!inResponse.returnValue) {
+    AjaxGet(host, cookiePath, cookies, function (inResponse0) {
+//        callback({returnValue:false, newmsg:inResponse0});
+//        return;
+        AjaxPost(host, newmsgPath, {}, cookies, function (inResponse) {
+            if (!inResponse.returnValue) {
+                if (!!callback) {
+                    callback({returnValue:false, newmsg:[]});
+                }
+                return false;
+            }
             if (!!callback) {
-                callback({returnValue:false, newmsg:[]});
+                try{
+                    callback({returnValue:true, newmsg:JSON.parse(inResponse.responseText).chat_messages});
+                }catch(err){
+                    callback({returnValue:true, newmsg:[]});
+                }
             }
-            return false;
-        }
-        if (!!callback) {
-            if (inResponse.responseText === '') {
-                callback({returnValue:true, newmsg:[]});
-            } else {
-                callback({returnValue:true, newmsg:JSON.parse(inResponse.responseText).chat_messages});
-            }
-        }
-        return true;
+            return true;
+        });
     });
 }
 var readMsgs = function (cookies, idMsgs, callback) {

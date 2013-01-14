@@ -3,11 +3,13 @@
 *Fork from ericblade/webOS-messaging-connector*
 
 
-## To do:
+## 功能
 
-### Fetion API(done)
+*1.发送飞信消息, 使用对方手机号发送*
 
-### synergy messaging connector(can SEND MESSAGE)
+*2.接受飞信消息, 接受的消息ID为飞信内部ID(非飞信号,也非手机号)*
+
+*3.给任何好友发送消息@start开启5分钟一次的检查新消息,@stop停止检查新消息*
 
 ## BUG
 

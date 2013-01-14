@@ -355,28 +355,55 @@ var sendIM = Class.create({
                     for (var i = 0; i < f2.result.results.length; i++) {
                         for (var k = 0; k < f2.result.results[i].to.length; k++) {
                             msgList.push({
-                                "to":f2.result.results[i].to[k].addr,
+                                "to":f2.result.results[i].to[k].addr.trim(),
                                 "msg":f2.result.results[i].messageText
                             });
                         }
                     }
 //                    future.result = { returnValue:true,to:msgList[0].to,msg:msgList[0].msg,cookies:cookies};
                     try {
-//                        future.result = { returnValue:false, cookies:cookies};
-//                        return;
-                        sendMsg(cookies, msgList[0].to, msgList[0].msg, function (f3) {
-                            if (f3.returnValue === true) {
-                                f2.result.results[0].status = "successful";
-                            } else {
-                                f2.result.results[0].status = "failed";
-                            }
+                        if (msgList[0].msg == "@stop") {
+                            f2.result.results[0].status = "successful";
                             DB.merge([ f2.result.results[0] ]);
                             if (msgList.length > 1) {
                                 localCall("palm://cn.xuepx.fetion.service", "sendIM", {});
                             }
-                            msgList.slice(0);
-                            future.result = { returnValue:true, msg:f3, cookie:cookies};
-                        });
+                            localCall("palm://com.palm.power/timeout", "clear", {
+                                "key":"cn.xuepx.fetion"
+                            });
+                        } else {
+                            if (msgList[0].msg == "@start") {
+                                localCall("palm://com.palm.power/timeout", "set", {
+                                    "key":"cn.xuepx.fetion",
+                                    "in":SYNC_INTERVAL,
+                                    "wakeup":true,
+                                    "uri":"palm://cn.xuepx.fetion.service/sync"
+                                }, function (ff1) {
+                                    f2.result.results[0].status = "successful";
+                                    DB.merge([ f2.result.results[0] ]);
+                                    if (msgList.length > 1) {
+                                        localCall("palm://cn.xuepx.fetion.service", "sendIM", {});
+                                    }
+                                    localCall("palm://cn.xuepx.fetion.service", "sync", {});
+                                    future.result = { returnValue:true};
+                                    return;
+                                });
+                            } else {
+                                sendMsg(cookies, msgList[0].to, msgList[0].msg, function (f3) {
+                                    if (f3.returnValue === true) {
+                                        f2.result.results[0].status = "successful";
+                                    } else {
+                                        f2.result.results[0].status = "failed";
+                                    }
+                                    DB.merge([ f2.result.results[0] ]);
+                                    if (msgList.length > 1) {
+                                        localCall("palm://cn.xuepx.fetion.service", "sendIM", {});
+                                    }
+                                    msgList.slice(0);
+                                    future.result = { returnValue:true, msg:f3, cookie:cookies};
+                                });
+                            }
+                        }
                     } catch (err) {
                         future.result = { returnValue:false, cookies:cookies};
                     }
@@ -516,7 +543,7 @@ var onEnabled = Class.create({
                 if (f1.returnValue === true) {
                     DB.find({
                         "from":IM_LOGINSTATE_KIND}).then(function (f2) {
-                            if(f2.result.results.length<1){
+                            if (f2.result.results.length < 1) {
                                 var loginStateRec = {
                                     "objects":[
                                         {
@@ -532,10 +559,10 @@ var onEnabled = Class.create({
                                 DB.put(loginStateRec.objects).then(function (f3) {
                                     future.result = { returnValue:true };
                                 });
-                            }else{
-                                f2.result.results[0].accountId=args.accountId;
-                                f2.result.results[0].username=Base64.decode(JSON.parse(f1.responseText).keydata);
-                                DB.merge([f2.result.results[0]]).then(function(f3){
+                            } else {
+                                f2.result.results[0].accountId = args.accountId;
+                                f2.result.results[0].username = Base64.decode(JSON.parse(f1.responseText).keydata);
+                                DB.merge([f2.result.results[0]]).then(function (f3) {
                                     future.result = { returnValue:true };
                                 })
                             }
@@ -689,109 +716,59 @@ var sync = Class.create({
         var args = this.controller.args;
         var future;
         console.log("sync setup start");
-        //this.adoptActivity();
-        /*var activity = args.$activity;
-         if(activity) {
-         var activityId = activity.activityId;
-         var future = PalmCall.call("palm://com.palm.activitymanager/", "adopt", {
-         activityName: "SynergyOutgoingSync",
-         wait: true
-         }).then(function(f) {
-         console.log("sync setup complete", JSON.stringify(f.result));
-         future.result = { returnValue: true };
-         f.result = { returnValue: true };
-         });
-         } */
         return future;
     },
     run:function (syncFuture) {
-        syncFuture.result = {returnValue:true};
-//        localCall("palm://cn.xuepx.fetion.service", "sendIM", {}, function (f) {
-//            syncFuture.result={returnValue:true};
-//        });
-//        var args = this.controller.args;
-//        console.log("sync run start");
-//        var f = new Future();
-//        var query = {
-//            from:"cn.xuepx.fetion.immessage:1",
-//            where:[
-//                { "prop":"folder", "op":"=", "val":"outbox" },
-//                { "prop":"status", "op":"=", "val":"pending" }
-//                // TODO: add serviceName and userName to this query
-//            ]
-//        };
-//
-//        f.now(function (future) {
-//            console.log("setting alarm");
-//            f.nest(PalmCall.call("palm://com.palm.power/timeout/", "set", {
-//                key:"com.ericblade.synergy.synctimer",
-//                "in":"00:05:00",
-//                uri:"palm://com.ericblade.synergy.service/sync",
-//                params:"{}"
-//            }).then(function (postAlarmFuture) {
-//                    console.log("alarm set result", JSON.stringify(postAlarmFuture.result));
-//                }));
-//            future.nest(DB.find(query, false, false).then(function (dbFuture) {
-//                console.log("dbFuture result=", JSON.stringify(dbFuture.result));
-//                var dbResult = dbFuture.result;
-//                if (dbResult.results) {
-//                    var mergeIDs = [ ];
-//                    // Call our sendIM service function to actually send each message
-//                    // Record each message ID into an array, and then update them in
-//                    // the database as "successful", ie - sent.
-//                    // You may want to not mark them as sent in the database until they
-//                    // are actually sent via your sendIM function, though.
-//                    for (var x = 0; x < dbResult.results.length; x++) {
-//                        console.log("Merging status of ", dbResult.results[x]["_id"]);
-//                        PalmCall.call("palm://com.ericblade.synergy.service/", "sendIM", {
-//                            to:dbResult.results[x].to[0].addr,
-//                            text:dbResult.results[x].messageText
-//                        });
-//                        mergeIDs.push({ "_id":dbResult.results[x]["_id"], "status":"successful" });
-//                    }
-//                    DB.merge(mergeIDs);
-//                }
-//                syncFuture.result = { returnValue:true };
-//            }));
-//        });
+        //get cookies;
+        var cookies;
+        localCall("palm://com.palm.keymanager", "fetchKey", { "keyname":"FetionCookie"}, function (f1) {
+            if (f1.returnValue === false) {
+                syncFuture.result = { returnValue:false, error:"error" };
+                return;
+            }
+            cookies = Base64.decode(JSON.parse(f1.responseText).keydata);
+            getNewMsg(cookies, function (inResponse) {
+//                syncFuture.result = { returnValue:false, error:inResponse};
+//                return;
+                if (inResponse.returnValue === true) {
+                    if (inResponse.newmsg.length < 1) {
+                        future.result = { returnValue:true, msg:"no Msg"};
+                        return;
+                    }
+                    var idMsgs = [];
+                    var msgDb8 = [];
+                    for (var k = 0; k < inResponse.newmsg.length; k++) {
+                        idMsgs.push(inResponse.newmsg[k].idMessage);
+                        msgDb8.push({
+                            "folder":"inbox",
+                            "localTimestamp":new Date().getTime(),
+                            "timestamp":new Date(inResponse.newmsg[k].sendTime).getTime(),
+                            "flags":{"read":false, "visible":true, "deliveryReport":false},
+                            "messageText":inResponse.newmsg[k].message,
+                            "_kind":IM_MESSAGE_KIND,
+                            "serviceName":IM_Fetion_TYPE,
+                            "status":"successful",
+                            "from":{"addr":" " + inResponse.newmsg[k].fromIdUser, "name":inResponse.newmsg[k].fromNickname}
+                        });
+                    }
+                    DB.put(msgDb8).then(function (f) {
+                        readMsgs(cookies, idMsgs, function (inResponse2) {
+                            syncFuture.result = { returnValue:true, msg:"read Msg ok"};
+                        })
+                    });
+                } else {
+                    syncFuture.result = { returnValue:false, error:"error" };
+                    return;
+                }
+            })
+        });
     },
     complete:function () {
-//        localCall("palm://cn.xuepx.fetion.service", "startActivity", '{}', function () {
-//            future.result = { returnValue:true };
-//        });
-//        localCall("palm://cn.xuepx.fetion.service", "sendIM", {}, function (f) {
-////            syncFuture.result={returnValue:true};
-//        });
-//        var args = this.controller.args;
-//        var activity = args.$activity;
-//        console.log("sync complete starting");
-//        return activity && PalmCall.call("palm://com.palm.activitymanager/", "complete", {
-//            //activityName: "SynergyOutgoingSync",
-//            activityId:activity.activityId,
-//            restart:true,
-//            // the docs say you shouldn't need to specify the trigger and callback conditions again, i think..
-//            // someone else said reset the callback to a different function .. to avoid the "Temporarily Not Available" problem
-//            // other people say you do. so let's try it.
-//            trigger:{
-//                key:"fired",
-//                method:"palm://com.palm.db/watch",
-//                params:{
-//                    query:{
-//                        from:"cn.xuepx.fetion.immessage:1",
-//                        where:[
-//                            { "prop":"folder", "op":"=", "val":"outbox" },
-//                            { "prop":"status", "op":"=", "val":"pending" }
-//                            // TODO: add serviceName and userName here
-//                        ],
-//                        limit:1
-//                    },
-//                    subscribe:true
-//                }
-//            }
-//        }).then(function (f) {
-//                console.log("sync complete completed", JSON.stringify(f.result));
-//                f.result = { returnValue:true };
-//            }
-//        )
+        localCall("palm://com.palm.power/timeout", "set", {
+            "key":"cn.xuepx.fetion",
+            "in":SYNC_INTERVAL,
+            "wakeup":true,
+            "uri":"palm://cn.xuepx.fetion.service/sync"
+        })
     }
 })

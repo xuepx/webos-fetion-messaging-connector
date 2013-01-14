@@ -173,6 +173,7 @@ var IM_COMMAND_KIND = "cn.xuepx.fetion.imcommand:1";
 var KIND_PREFIX = "cn.xuepx.*";
 var IM_COMMAND_KIND = "cn.xuepx.fetion.imcommand:1";
 var IM_Fetion_TYPE = "type_fetion";
+var SYNC_INTERVAL = "00:05:00";
 
 function queryFromAccountId(kind, accountId, where) {
     query = {
