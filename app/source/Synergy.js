@@ -4,8 +4,8 @@ enyo.kind({
 
 	components: [
 		{ name: "credService", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "checkCredentials", onSuccess: "credSuccess", onFailure: "credFailure" },
-		{ name: "syncService", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "sync", onSuccess: "syncSuccess", onFailure: "syncFailure" },
-		{ name: "createAccount", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "onCreate", onSuccess: "createSuccess", onFailure: "createFailure" },
+		{ name: "syncService", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "sendIM", onSuccess: "syncSuccess", onFailure: "syncFailure" },
+		{ name: "createAccount", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "loginStateChanged", onSuccess: "createSuccess", onFailure: "createFailure" },
 		{ name: "disenableAccountCap", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "onEnabled", onSuccess: "enabledSuccess", onFailure: "enabledFailure" },
 		{ name: "deleteAccount", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "onDelete", onSuccess: "deletedSuccess", onFailure: "deletedFailure" },
 		{ name: "startActivity", kind: "PalmService", service: "palm://cn.xuepx.fetion.service/", method: "startActivity", onSuccess: "startSuccess", onFailure: "startFailure" },
@@ -35,7 +35,7 @@ enyo.kind({
 					{ kind: "Button", label: "onDelete", onclick: "callDelete" }
 				]},
 				{ kind: "Group", label: "Misc", components: [
-					{ kind: "Button", label: "Sync", onclick: "sync" },
+					{ kind: "Button", label: "Send", onclick: "sync" },
 					{ kind: "Button", label: "startActivity", onclick: "startActivity" },
 					{ kind: "Button", label: "adoptActivity", onclick: "adoptActivity" },
 					{ kind: "Button", label: "completeActivity", onclick: "completeActivity" }

@@ -353,7 +353,8 @@ var sendMsgbyId = function (cookies, idContact, msg, callback) {
     if (!cookies) {
         if (!!callback) {
             callback({
-                returnValue:false
+                returnValue:false,
+                cookie:cookies
             });
         }
         return false;
@@ -363,20 +364,30 @@ var sendMsgbyId = function (cookies, idContact, msg, callback) {
         'msg':msg
 //        'csrfToken':''
     }
-    AjaxPost(host, sendmsgPath, params, cookies, function (inResponse) {
-        if (inResponse.returnValue === false) {
+    AjaxGet(host, cookiePath, cookies, function (inResponse) {
+//        if (!!inResponse.cookie) {//JSESSIONID outdate
+//            var cookieList = cookies.split(";");
+//            cookieList[1] = inResponse.cookie;
+//            cookies = cookieList.join(";");
+//        }
+        AjaxPost(host, sendmsgPath, params, cookies, function (inResponse) {
+            if (inResponse.returnValue === false) {
+                if (!!callback) {
+                    callback({
+                        returnValue:false,
+                        responseText:"error:" + inResponse.responseText
+                    });
+                }
+                return false;
+            }
             if (!!callback) {
                 callback({
-                    returnValue:false
+                    returnValue:true,
+                    responseText:"success:" + inResponse.responseText
                 });
             }
-            return false;
-        }
-        if (!!callback) {
-            callback({
-                returnValue:true
-            });
-        }
+            return true;
+        });
     });
 }
 var sendMsg = function (cookies, mobile, msg, callback) {
@@ -394,25 +405,27 @@ var sendMsg = function (cookies, mobile, msg, callback) {
             if (inResponse3.returnValue === false) {
                 if (!!callback) {
                     callback({
-                        returnValue:false
+                        returnValue:false,
+                        responseText:"Error:" + inResponse3.responseText
                     });
                 }
                 return false;
             }
             if (!!callback) {
                 callback({
-                    returnValue:true
+                    returnValue:true,
+                    responseText:inResponse3.responseText
                 });
             }
             return true;
         });
-        return false;
     }
     getIdContact(cookies, mobile, function (inResponse) {
         if (inResponse.returnValue === false) {
             if (!!callback) {
                 callback({
-                    returnValue:false
+                    returnValue:false,
+                    responseText:"getId error"
                 });
             }
             return false;
@@ -421,14 +434,16 @@ var sendMsg = function (cookies, mobile, msg, callback) {
             if (inResponse2.returnValue === false) {
                 if (!!callback) {
                     callback({
-                        returnValue:false
+                        returnValue:false,
+                        responseText:"send to " + inResponse.idContact + " error"
                     });
                 }
                 return false;
             }
             if (!!callback) {
                 callback({
-                    returnValue:true
+                    returnValue:true,
+                    responseText:inResponse.responseText
                 });
             }
             return true;
@@ -445,21 +460,23 @@ var getIdContact = function (cookies, mobile, callback) {
         }
         return false;
     }
-    AjaxGet(host, getIdPath.replace(/%mobile%/, mobile), cookies, function (inResponse) {
-        if (inResponse.returnValue === false) {
+    AjaxGet(host, cookiePath, cookies, function (inResponse0) {
+        AjaxGet(host, getIdPath.replace(/%mobile%/, mobile), cookies, function (inResponse) {
+            if (inResponse.returnValue === false) {
+                if (!!callback) {
+                    callback({
+                        returnValue:false,
+                        idContact:''
+                    });
+                }
+            }
             if (!!callback) {
                 callback({
-                    returnValue:false,
-                    idContact:''
+                    returnValue:true,
+                    idContact:JSON.parse(inResponse.responseText).userinfo.idUser
                 });
             }
-        }
-        if (!!callback) {
-            callback({
-                returnValue:true,
-                idContact:JSON.parse(inResponse.responseText).userinfo.idUser
-            });
-        }
+        });
     });
 }
 var addFriend = function (cookies, mobile, callback) {
@@ -489,8 +506,8 @@ var addFriend = function (cookies, mobile, callback) {
         }
     });
 }
-fetionLogin('130000000', 'password', function (inResponse) {
-    console.log(inResponse);
+//fetionLogin('13000000000', 'xuepx', function (inResponse) {
+//    console.log(inResponse);
 //        getAllContact(inResponse.cookies.join(";"), function (inResponse2) {
 //            console.log(inResponse2.allContactList);
 //        })
@@ -512,9 +529,9 @@ fetionLogin('130000000', 'password', function (inResponse) {
 //        getIdContact(inResponse.cookies.join(";"),'1300000000',function(inResponse){
 //            console.log(inResponse);
 //        });
+//    console.log(inResponse.cookies.slice(1))
 //        sendMsg(inResponse.cookies.join(";"), '1300000000', '怎么了', function (inResponse) {
 //            console.log(inResponse);
-//            exit(0)
 //        });
 //    }
-})
+//})

@@ -151,15 +151,15 @@ var Base64 = {
 };
 
 var localCall = function (service, method, params, callBack) {
-    exec("/usr/bin/luna-send -n 1 " + service + "/" + method + " '" + JSON.stringify(params) + "'",
+    exec('/usr/bin/luna-send -n 1 ' + service + '/' + method + ' \'' + JSON.stringify(params) + '\'',
         function (error, stdout, stderr) {
-            var data = JSON.parse(stdout);
             if (error !== null) {
-                callBack({returnValue:false, responseText:"error: " + JSON.parse(stderr)});
+                callBack({returnValue:false, responseText:"error: " + JSON.stringify(stderr)});
                 return;
             }
-            if (!data.returnValue) {
-                callBack({returnValue:false, responseText:"error: " + JSON.parse(data)});
+            var data = JSON.parse(stdout);
+            if (data.returnValue===false) {
+                callBack({returnValue:false, responseText:"error: " + JSON.stringify(data)});
                 return;
             }
             callBack({returnValue:true, responseText:stdout});
@@ -169,6 +169,7 @@ var localCall = function (service, method, params, callBack) {
 
 var IM_LOGINSTATE_KIND = "cn.xuepx.fetion.imloginstate:1";
 var IM_MESSAGE_KIND = "cn.xuepx.fetion.immessage:1";
+var IM_COMMAND_KIND = "cn.xuepx.fetion.imcommand:1";
 var KIND_PREFIX = "cn.xuepx.*";
 var IM_COMMAND_KIND = "cn.xuepx.fetion.imcommand:1";
 var IM_Fetion_TYPE = "type_fetion";

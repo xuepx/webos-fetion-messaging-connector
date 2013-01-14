@@ -85,20 +85,44 @@ var checkCredentials = Class.create({
             if (inResponse.returnValue === false) {
                 future.result = {returnValue:false, errorCode:"401_UNAUTHORIZED"}; // Login ERROR
             } else {
-                future.result = {
-                    returnValue:true,
-                    credentials:{
-                        common:{
-                            password:args.password,
-                            username:args.username
-                        }
-                    },
-                    config:{
-                        password:args.password,
-                        username:args.username,
-                        cookies:inResponse.cookies.join(";")
+                var B64username = Base64.encode(args.username);
+                var B64password = Base64.encode(args.password);
+                var B64cookie = Base64.encode(inResponse.cookies.join(";"));
+                var keystore1 = { "keyname":"FetionUsername", "keydata":B64username, "type":"AES", "nohide":true};
+                var keystore2 = { "keyname":"FetionPassword", "keydata":B64password, "type":"AES", "nohide":true};
+                var keystore3 = { "keyname":"FetionCookie", "keydata":B64cookie, "type":"AES", "nohide":true};
+                localCall("palm://com.palm.keymanager", "store", keystore1, function (f1) {
+                    if (f1.returnValue === true) {
+                        localCall("palm://com.palm.keymanager", "store", keystore2, function (f2) {
+                            if (f2.returnValue === true) {
+                                localCall("palm://com.palm.keymanager", "store", keystore3, function (f3) {
+//                                    future.result = f3;
+                                    if (f3.returnValue === true) {
+                                        future.result = {
+                                            returnValue:true,
+                                            credentials:{
+                                                common:{
+                                                    password:args.password,
+                                                    username:args.username
+                                                }
+                                            },
+                                            config:{
+                                                password:args.password,
+                                                username:args.username
+                                            }
+                                        };
+                                    } else {
+                                        future.result = f3;
+                                    }
+                                });
+                            } else {
+                                future.result = f2;
+                            }
+                        });
+                    } else {
+                        future.result = f1;
                     }
-                }
+                });
             }
         })
     }
@@ -150,35 +174,56 @@ var onCreate = Class.create({
                     delete:"allow",
                     update:"allow"
                 }
+            },
+            {
+                type:"db.kind",
+                object:IM_LOGINSTATE_KIND,
+                caller:KIND_PREFIX,
+                operations:{
+                    read:"allow",
+                    create:"allow",
+                    delete:"allow",
+                    update:"allow"
+                }
+            },
+            {
+                type:"db.kind",
+                object:IM_LOGINSTATE_KIND,
+                caller:"com.palm.*",
+                operations:{
+                    read:"allow",
+                    create:"allow",
+                    delete:"allow",
+                    update:"allow"
+                }
+            },
+            {
+                type:"db.kind",
+                object:IM_COMMAND_KIND,
+                caller:KIND_PREFIX,
+                operations:{
+                    read:"allow",
+                    create:"allow",
+                    delete:"allow",
+                    update:"allow"
+                }
+            },
+            {
+                type:"db.kind",
+                object:IM_COMMAND_KIND,
+                caller:"com.palm.*",
+                operations:{
+                    read:"allow",
+                    create:"allow",
+                    delete:"allow",
+                    update:"allow"
+                }
             }
         ];
 
         PalmCall.call("palm://com.palm.db/", "putPermissions", { permissions:permissions }).then(function (fut) {
             console.log("permissions put result=", JSON.stringify(fut.result));
             future.result = { returnValue:true, permissionsresult:fut.result };
-        });
-
-
-        var B64username = Base64.encode(args.config.username);
-        var B64password = Base64.encode(args.config.password);
-        var B64cookie = Base64.encode(args.config.cookies);
-        var keystore1 = { "keyname":"FetionUsername" + args.accountId, "keydata":B64username, "type":"AES", "nohide":true};
-        var keystore2 = { "keyname":"FetionPassword" + args.accountId, "keydata":B64password, "type":"AES", "nohide":true};
-        var keystore3 = { "keyname":"FetionCookie" + args.accountId, "keydata":B64cookie, "type":"AES", "nohide":true};
-        localCall("palm://com.palm.keymanager", "store", keystore1, function (f1) {
-            if (f1.returnValue) {
-                localCall("palm://com.palm.keymanager", "store", keystore2, function (f2) {
-                    if (f2.returnValue) {
-                        localCall("palm://com.palm.keymanager", "store", keystore3, function (f3) {
-                            future.result = f3;
-                        });
-                    } else {
-                        future.result = f2;
-                    }
-                });
-            } else {
-                future.result = f1;
-            }
         });
     }
 });
@@ -188,28 +233,51 @@ var onCreate = Class.create({
 
 var onDelete = Class.create({
     run:function (future) {
-        var args = this.controller.args;
-        var q = { "query":{ "from":IM_LOGINSTATE_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
-        var q2 = { "query":{ "from":IM_MESSAGE_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
-        var q3 = { "query":{ "from":IM_COMMAND_KIND}};//, "where":[{"prop":"accountId","op":"=","val":args.accountId}] }};
-        localCall("palm://com.palm.db/", "del", q, function (f1) {
-            console.log("del loginstate", f1);
-            if (f1.returnValue) {
-                localCall("palm://com.palm.db/", "del", q2, function (f2) {
-                    console.log("del immessage", f2);
-                    if (f2.returnValue) {
-                        localCall("palm://com.palm.db/", "del", q3, function (f3) {
-                            console.log("del imcommand", f3);
-                            future.result = f3;
-                        });
-                    } else {
-                        future.result = f2;
-                    }
-                });
-            } else {
-                future.result = f1;
-            }
-        });
+//        var args = this.controller.args;
+//        var q = { "query":{ "from":IM_LOGINSTATE_KIND, "where":[
+//            {"prop":"accountId", "op":"=", "val":args.accountId}
+//        ] }};
+//        var q2 = { "query":{ "from":IM_MESSAGE_KIND, "where":[
+//            {"prop":"accountId", "op":"=", "val":args.accountId}
+//        ] }};
+//        var q3 = { "query":{ "from":IM_COMMAND_KIND, "where":[
+//            {"prop":"accountId", "op":"=", "val":args.accountId}
+//        ] }};
+//        localCall("palm://com.palm.db/", "del", q, function (f1) {
+//            console.log("del loginstate", f1);
+//            if (f1.returnValue === true) {
+//                localCall("palm://com.palm.db/", "del", q2, function (f2) {
+//                    console.log("del immessage", f2);
+//                    if (f2.returnValue === true) {
+//                        localCall("palm://com.palm.db/", "del", q3, function (f3) {
+//                            if (f3.returnValue === true) {
+//                                localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionUsername"}, function (ff1) {
+//                                    if (ff1.returnValue === true) {
+//                                        localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionPassword"}, function (ff2) {
+//                                            if (ff2.returnValue === true) {
+//                                                localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionCookie"}, function (ff3) {
+//                                                    future.result = ff3;
+//                                                });
+//                                            } else {
+//                                                future.result = ff2;
+//                                            }
+//                                        });
+//                                    } else {
+//                                        future.result = ff1;
+//                                    }
+//                                });
+//                            } else {
+//                                future.result = f3;
+//                            }
+//                        });
+//                    } else {
+//                        future.result = f2;
+//                    }
+//                });
+//            } else {
+//                future.result = f1;
+//            }
+//        });
     }
 });
 
@@ -241,7 +309,36 @@ var onCredentialsChanged = Class.create({
 
 var loginStateChanged = Class.create({
     run:function (future) {
-        var args = this.controller.args;
+//        var args = this.controller.args;
+//        if (args.$activity && args.$activity.activityId) {
+//            PalmCall.call("palm://com.palm.activitymanager/", "complete", {
+//                activityId:args.$activity.activityId
+//            });
+//        }
+//        var f1 = DB.find({"from":IM_LOGINSTATE_KIND});
+//        f1.then(function (future) {
+//            if (f1.result.results && f1.result.results.length <= 0) {
+//                future.result = { returnValue:false };
+//                return;
+//            }
+//            console.log(JSON.stringify(future.result));
+//            // TODO: Here we're only get the first result ...
+//            loginState = f1.result.results[0];
+//            if (loginState.state === "online") {
+//                loginState.state="offline";
+//                DB.merge([loginState]).then(function (f2) {
+//                    future.result = { returnValue:true };
+//                });
+//            }else{
+//                loginState.state="online";
+//                DB.merge([loginState]).then(function (f2) {
+//                    localCall("palm://cn.xuepx.fetion.service","startActivity",'{}',function(){
+//                        future.result = { returnValue:true };
+//                    });
+//                });
+//            }
+//        });
+        future.result = {r:JSON.stringify(args)};
         console.log("loginStateChanged", JSON.stringify(args));
     }
 })
@@ -252,6 +349,62 @@ var sendIM = Class.create({
     run:function (future) {
         var args = this.controller.args;
         console.log("sendIM", JSON.stringify(args));
+        // get cookie
+        var cookies;
+        localCall("palm://com.palm.keymanager", "fetchKey", { "keyname":"FetionCookie"}, function (f1) {
+            if (f1.returnValue === false) {
+                future.result = { returnValue:false, error:"error" };
+                return;
+            }
+            cookies = Base64.decode(JSON.parse(f1.responseText).keydata);
+            // Search for pending messages
+            var f = DB.find({
+                "from":IM_MESSAGE_KIND,
+                "where":[
+                    {"op":"=", "prop":"status", "val":"pending"},
+                    {"op":"=", "prop":"folder", "val":"outbox"}
+                ]}).then(function (f2) {
+                    if (f2.result.results.length <= 0) {
+                        future.result = {returnValue:false};
+                        return;
+                    }
+                    var msgList = [];
+                    for (var i = 0; i < f2.result.results.length; i++) {
+                        for (var k = 0; k < f2.result.results[i].to.length; k++) {
+                            msgList.push({
+                                "to":f2.result.results[i].to[k].addr,
+                                "msg":f2.result.results[i].messageText
+                            });
+                        }
+                    }
+//                    future.result = { returnValue:true,to:msgList[0].to,msg:msgList[0].msg,cookies:cookies};
+                    try {
+//                        future.result = { returnValue:false, cookies:cookies};
+//                        return;
+                        sendMsg(cookies, msgList[0].to, msgList[0].msg, function (f3) {
+                            if (f3.returnValue === true) {
+                                f2.result.results[0].status = "successful";
+                            } else {
+                                f2.result.results[0].status = "failed";
+                            }
+                            DB.merge([ f2.result.results[0] ]);
+                            if (msgList.length > 1) {
+                                localCall("palm://cn.xuepx.fetion.service", "sendIM", {});
+                            }
+                            msgList.slice(0);
+                            future.result = { returnValue:true, msg:f3, cookie:cookies};
+                        });
+                    } catch (err) {
+                        future.result = { returnValue:false, cookies:cookies};
+                    }
+                }
+            );
+        });
+    },
+    complete:function(){
+//        localCall("palm://cn.xuepx.fetion.service", "startActivity", {}, function (f1) {
+//
+//        });
     }
 });
 
@@ -321,95 +474,84 @@ var onEnabled = Class.create({
         console.log("onEnabledAssistant args.enabled=", args.enabled);
 
         if (args.enabled === false) {
+            future.result = { returnValue:false, responseText:"error: deltet imessage  error"};
             // cancel our sync activity, and remove the entry from the messaging loginstates,
             // so we no longer show up in the app
-            adoptActivity(args.accountId);
-            future.result = { returnValue:true };
+            var args = this.controller.args;
+            var q = { "query":{ "from":IM_LOGINSTATE_KIND}};
+            var q2 = { "query":{ "from":IM_MESSAGE_KIND}};
+            var q3 = { "query":{ "from":IM_COMMAND_KIND}};
+//            localCall("palm://com.palm.db", "del", q, function (f1) {
+//                console.log("del loginstate", f1);
+//                if (f1.returnValue === true) {
+//                    localCall("palm://com.palm.db", "del", q2, function (f2) {
+//                        console.log("del immessage", f2);
+//                        if (f2.returnValue === true) {
+//                            localCall("palm://com.palm.db", "del", q3, function (f3) {
+//                                if (f3.returnValue === true) {
+//                                    localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionUsername"}, function (ff1) {
+//                                        if (ff1.returnValue === true) {
+//                                            localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionPassword"}, function (ff2) {
+//                                                if (ff2.returnValue === true) {
+//                                                    localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionCookie"}, function (ff3) {
+//                                                        //future.result = ff3;
+//                                                        if (ff3.returnValue === true) {
+//                                                            adoptActivity(args.accountId);
+//                                                            future.result = { returnValue:true, hello:"j"};
+//                                                        } else {
+//                                                            future.result = { returnValue:false, responseText:"error: deltet fetionCookie error"};
+//                                                        }
+//                                                    });
+//                                                } else {
+//                                                    future.result = { returnValue:false, responseText:"error: deltet fetionPassword error"};
+//                                                }
+//                                            });
+//                                        } else {
+//                                            future.result = { returnValue:false, responseText:"error: deltet fetionusername error"};
+//                                        }
+//                                    });
+//                                } else {
+//                                    future.result = { returnValue:false, responseText:"error: deltet imcommand error"};
+//                                }
+//                            });
+//                        } else {
+//                            future.result = { returnValue:false, responseText:"error: deltet imessage  error"};
+//                        }
+//                    });
+//                } else {
+//                    future.result = { returnValue:false, responseText:"error: deltet imloginstate error"};
+//                }
+//            });
+//            future.result = { returnValue:true };
 //            localCall("palm://com.palm.db/", "del", {"query":{"from":"cn.xuepx.fetion.imloginstate:1" }}, function (f2) {
 //                future.result = f2;
 //            });
         }
         else {
-//            // Create an object to insert into the database, so that the messaging app
-//            // knows that we exist.
-            var loginStateRec = {
-                "objects":[
-                    {
-                        _kind:"cn.xuepx.fetion.imloginstate:1",
-                        serviceName:IM_Fetion_TYPE,
-                        accountId:args.accountId,
-                        username:"xuepx",
-                        state:"online", // it doesn't -seem- to matter what i put here, there may be another parameter involved
-                        availability:1
-                    }
-                ]
-            };
-            localCall("palm://com.palm.db/", "put", loginStateRec,function(f){
-                future.result = { returnValue:true };
-                if(f.returnValue===true){
-                    localCall("palm://cn.xuepx.fetion.service", "startActivity", args,function(f2){
-                        if(f2.returnValue===true){
+            localCall("palm://com.palm.keymanager/", "fetchKey", { "keyname":"FetionUsername"}, function (f1) {
+                if (f1.returnValue === true) {
+                    var loginStateRec = {
+                        "objects":[
+                            {
+                                _kind:IM_LOGINSTATE_KIND,
+                                serviceName:IM_Fetion_TYPE,
+                                accountId:args.accountId,
+                                username:Base64.decode(JSON.parse(f1.responseText).keydata),
+                                state:"online",
+                                availability:1
+                            }
+                        ]
+                    };
+                    DB.put(loginStateRec.objects).then(function (f2) {
+                        localCall("palm://cn.xuepx.fetion.service", "startActivity", '{}', function () {
                             future.result = { returnValue:true };
-                        }else{
-                            future.result = { returnValue:false };
-                        }
+                        });
+//                        future.result = { returnValue:true };
                     });
-                    future.result = { returnValue:true };
-                }else{
-                    future.result = { returnValue:false };
+                } else {
+                    future.result = { returnValue:false, error:"FetionCookie Not Found!" };
                 }
             });
-//
-//            // And then start an Activity to organize our syncing
-//
-//            PalmCall.call("palm://com.palm.db/", "put", loginStateRec).then(function (f) {
-//                var startSync = PalmCall.call("palm://com.palm.activitymanager/", "create",
-//                    {
-//                        start:true,
-//                        activity:{
-//                            name:"SynergyOutgoingSync:" + args.accountId,
-//                            description:"Synergy Pending Messages Watch",
-//                            type:{
-//                                foreground:true,
-//                                power:true,
-//                                powerDebounce:true,
-//                                explicit:true,
-//                                persist:true
-//                            },
-//                            requirements:{
-//                                internet:true
-//                            },
-//                            trigger:{
-//                                method:"palm://com.palm.db/watch",
-//                                key:"fired",
-//                                params:{
-//                                    subscribe:true,
-//                                    query:{
-//                                        from:"cn.xuepx.fetion.immessage:1",
-//                                        where:[
-//                                            { prop:"status", op:"=", val:"pending" },
-//                                            { prop:"folder", op:"=", val:"outbox" }
-//                                            // TODO: Grab the username from somewhere, and insert it here
-//                                            /*{ prop: "serviceName", op: "=", val: "type_synergy" },
-//                                             { prop: "userName", op: "=", val: TODO GET USERNAME FROM SOMEWHERE },*/
-//                                        ],
-//                                        limit:1
-//                                    }
-//                                }
-//                            },
-//                            callback:{
-//                                method:"palm://com.ericblade.synergy.service/sync",
-//                                params:{}
-//                            }
-//                        }
-//                    });
-//            });
-//        }
-//
-//        (args.enabled ? startSync : stopSync).then(function (activityFuture) {
-//            console.log("activityFuture", (args.enabled ? "start" : "stop"), " result=", JSON.stringify(activityFuture.result));
-//            future.result = { returnValue:true };
-//        });
         }
     }
 });
@@ -472,7 +614,7 @@ var startActivity = Class.create({
                         params:{
                             subscribe:true,
                             query:{
-                                from:"cn.xuepx.fetion.immessage:1",
+                                from:IM_MESSAGE_KIND,
                                 where:[
                                     { prop:"status", op:"=", val:"pending" },
                                     { prop:"folder", op:"=", val:"outbox" }
@@ -482,7 +624,7 @@ var startActivity = Class.create({
                         }
                     },
                     callback:{
-                        method:"palm://cn.xuepx.fetion.service/sync",
+                        method:"palm://cn.xuepx.fetion.service/sendIM",
                         params:{}
                     }
                 }
@@ -501,9 +643,9 @@ var adoptActivity = function (accountId) {
         subscribe:true
     }, function (f) {
         if (f.returnValue === true) {
-            adoptFuture.result = {returnValue:true};
+            return true;
         } else {
-            adoptFuture.result = {returnValue:false};
+            return false;
         }
     });
 }
@@ -554,6 +696,7 @@ var sync = Class.create({
         var args = this.controller.args;
         var future;
         console.log("sync setup start");
+        //this.adoptActivity();
         /*var activity = args.$activity;
          if(activity) {
          var activityId = activity.activityId;
@@ -569,6 +712,10 @@ var sync = Class.create({
         return future;
     },
     run:function (syncFuture) {
+        syncFuture.result={returnValue:true};
+//        localCall("palm://cn.xuepx.fetion.service", "sendIM", {}, function (f) {
+//            syncFuture.result={returnValue:true};
+//        });
 //        var args = this.controller.args;
 //        console.log("sync run start");
 //        var f = new Future();
@@ -616,6 +763,12 @@ var sync = Class.create({
 //        });
     },
     complete:function () {
+//        localCall("palm://cn.xuepx.fetion.service", "startActivity", '{}', function () {
+//            future.result = { returnValue:true };
+//        });
+//        localCall("palm://cn.xuepx.fetion.service", "sendIM", {}, function (f) {
+////            syncFuture.result={returnValue:true};
+//        });
 //        var args = this.controller.args;
 //        var activity = args.$activity;
 //        console.log("sync complete starting");
