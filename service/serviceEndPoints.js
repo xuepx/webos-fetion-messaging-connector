@@ -233,51 +233,34 @@ var onCreate = Class.create({
 
 var onDelete = Class.create({
     run:function (future) {
-//        var args = this.controller.args;
-//        var q = { "query":{ "from":IM_LOGINSTATE_KIND, "where":[
-//            {"prop":"accountId", "op":"=", "val":args.accountId}
-//        ] }};
-//        var q2 = { "query":{ "from":IM_MESSAGE_KIND, "where":[
-//            {"prop":"accountId", "op":"=", "val":args.accountId}
-//        ] }};
-//        var q3 = { "query":{ "from":IM_COMMAND_KIND, "where":[
-//            {"prop":"accountId", "op":"=", "val":args.accountId}
-//        ] }};
-//        localCall("palm://com.palm.db/", "del", q, function (f1) {
-//            console.log("del loginstate", f1);
-//            if (f1.returnValue === true) {
-//                localCall("palm://com.palm.db/", "del", q2, function (f2) {
-//                    console.log("del immessage", f2);
-//                    if (f2.returnValue === true) {
-//                        localCall("palm://com.palm.db/", "del", q3, function (f3) {
-//                            if (f3.returnValue === true) {
-//                                localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionUsername"}, function (ff1) {
-//                                    if (ff1.returnValue === true) {
-//                                        localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionPassword"}, function (ff2) {
-//                                            if (ff2.returnValue === true) {
-//                                                localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionCookie"}, function (ff3) {
-//                                                    future.result = ff3;
-//                                                });
-//                                            } else {
-//                                                future.result = ff2;
-//                                            }
-//                                        });
-//                                    } else {
-//                                        future.result = ff1;
-//                                    }
-//                                });
-//                            } else {
-//                                future.result = f3;
-//                            }
-//                        });
-//                    } else {
-//                        future.result = f2;
-//                    }
-//                });
-//            } else {
-//                future.result = f1;
-//            }
-//        });
+        var args = this.controller.args;
+        var q = { "query":{ "from":IM_LOGINSTATE_KIND }};
+        localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionUsername"}, function (ff1) {
+            if (ff1.returnValue === true) {
+                localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionPassword"}, function (ff2) {
+                    if (ff2.returnValue === true) {
+                        localCall("palm://com.palm.keymanager", "remove", { "keyname":"FetionCookie"}, function (ff3) {
+                            if (ff3.returnValue === true) {
+                                localCall("palm://com.palm.db/", "del", q, function (f1) {
+                                    console.log("del loginstate", f1);
+                                    if (f1.returnValue === true) {
+                                        future.result = f1;
+                                    } else {
+                                        future.result = f1;// { returnValue:false, responseText:"error: deltet imloginstate error"};
+                                    }
+                                });
+                            } else {
+                                future.result = { returnValue:false, responseText:"error: deltet fetionCookie error"};
+                            }
+                        });
+                    } else {
+                        future.result = { returnValue:false, responseText:"error: deltet fetionPassword error"};
+                    }
+                });
+            } else {
+                future.result = { returnValue:false, responseText:"error: deltet fetionusername error"};
+            }
+        });
     }
 });
 
@@ -401,7 +384,7 @@ var sendIM = Class.create({
             );
         });
     },
-    complete:function(){
+    complete:function () {
 //        localCall("palm://cn.xuepx.fetion.service", "startActivity", {}, function (f1) {
 //
 //        });
@@ -473,14 +456,15 @@ var onEnabled = Class.create({
 
         console.log("onEnabledAssistant args.enabled=", args.enabled);
 
-        if (args.enabled === false) {
-            future.result = { returnValue:false, responseText:"error: deltet imessage  error"};
+        if (!args.enabled) {
+            future.result = { returnValue:true, debug:"debug.false"};
+            return;
             // cancel our sync activity, and remove the entry from the messaging loginstates,
             // so we no longer show up in the app
-            var args = this.controller.args;
-            var q = { "query":{ "from":IM_LOGINSTATE_KIND}};
-            var q2 = { "query":{ "from":IM_MESSAGE_KIND}};
-            var q3 = { "query":{ "from":IM_COMMAND_KIND}};
+//            var args = this.controller.args;
+//            var q = { "query":{ "from":IM_LOGINSTATE_KIND}};
+//            var q2 = { "query":{ "from":IM_MESSAGE_KIND}};
+//            var q3 = { "query":{ "from":IM_COMMAND_KIND}};
 //            localCall("palm://com.palm.db", "del", q, function (f1) {
 //                console.log("del loginstate", f1);
 //                if (f1.returnValue === true) {
@@ -530,24 +514,33 @@ var onEnabled = Class.create({
         else {
             localCall("palm://com.palm.keymanager/", "fetchKey", { "keyname":"FetionUsername"}, function (f1) {
                 if (f1.returnValue === true) {
-                    var loginStateRec = {
-                        "objects":[
-                            {
-                                _kind:IM_LOGINSTATE_KIND,
-                                serviceName:IM_Fetion_TYPE,
-                                accountId:args.accountId,
-                                username:Base64.decode(JSON.parse(f1.responseText).keydata),
-                                state:"online",
-                                availability:1
+                    DB.find({
+                        "from":IM_LOGINSTATE_KIND}).then(function (f2) {
+                            if(f2.result.results.length<1){
+                                var loginStateRec = {
+                                    "objects":[
+                                        {
+                                            _kind:IM_LOGINSTATE_KIND,
+                                            serviceName:IM_Fetion_TYPE,
+                                            accountId:args.accountId,
+                                            username:Base64.decode(JSON.parse(f1.responseText).keydata),
+                                            state:"online",
+                                            availability:1
+                                        }
+                                    ]
+                                };
+                                DB.put(loginStateRec.objects).then(function (f3) {
+                                    future.result = { returnValue:true };
+                                });
+                            }else{
+                                f2.result.results[0].accountId=args.accountId;
+                                f2.result.results[0].username=Base64.decode(JSON.parse(f1.responseText).keydata);
+                                DB.merge([f2.result.results[0]]).then(function(f3){
+                                    future.result = { returnValue:true };
+                                })
                             }
-                        ]
-                    };
-                    DB.put(loginStateRec.objects).then(function (f2) {
-                        localCall("palm://cn.xuepx.fetion.service", "startActivity", '{}', function () {
-                            future.result = { returnValue:true };
-                        });
-//                        future.result = { returnValue:true };
-                    });
+                        }
+                    );
                 } else {
                     future.result = { returnValue:false, error:"FetionCookie Not Found!" };
                 }
@@ -712,7 +705,7 @@ var sync = Class.create({
         return future;
     },
     run:function (syncFuture) {
-        syncFuture.result={returnValue:true};
+        syncFuture.result = {returnValue:true};
 //        localCall("palm://cn.xuepx.fetion.service", "sendIM", {}, function (f) {
 //            syncFuture.result={returnValue:true};
 //        });
