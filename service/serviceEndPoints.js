@@ -368,25 +368,22 @@ var sendIM = Class.create({
                             if (msgList.length > 1) {
                                 localCall("palm://cn.xuepx.fetion.service", "sendIM", {});
                             }
-                            localCall("palm://com.palm.power/timeout", "clear", {
-                                "key":"cn.xuepx.fetion"
+                            exec('luna-send -n 1 palm://com.palm.power/timeout/clear \'{"key":"cn.xuepx.fetion.timer"}\'',function(){
+                                future.result = { returnValue:true};
+                                return;
                             });
                         } else {
-                            if (msgList[0].msg == "@start") {
-                                localCall("palm://com.palm.power/timeout", "set", {
-                                    "key":"cn.xuepx.fetion",
-                                    "in":SYNC_INTERVAL,
-                                    "wakeup":true,
-                                    "uri":"palm://cn.xuepx.fetion.service/sync"
-                                }, function (ff1) {
-                                    f2.result.results[0].status = "successful";
-                                    DB.merge([ f2.result.results[0] ]);
+                            if (msgList[0].msg.substr(0,6) == "@start") {
+                                f2.result.results[0].status = "successful";
+                                DB.merge([ f2.result.results[0] ]).then(function () {
                                     if (msgList.length > 1) {
                                         localCall("palm://cn.xuepx.fetion.service", "sendIM", {});
                                     }
-                                    localCall("palm://cn.xuepx.fetion.service", "sync", {});
-                                    future.result = { returnValue:true};
-                                    return;
+                                    localCall("palm://cn.xuepx.fetion.service", "sync", {}, function () {
+                                        future.result = { returnValue:true};
+                                        try{UPDATE_INTERVAL=parseInt(msgList[0].msg.split(":")[1])*1000;}catch(err){}
+                                        return;
+                                    });
                                 });
                             } else {
                                 sendMsg(cookies, msgList[0].to, msgList[0].msg, function (f3) {
@@ -711,6 +708,27 @@ var cancelActivity = Class.create({
     }
 })
 
+setWakeup = function (a) {
+    a = a < 30000 ? 30000 : a;
+    var b = new Date();
+    var c = b.getTime() + a;
+    var d = new Date(c);
+    var e = (d.getUTCMonth() + 1) > 9 ? (d.getUTCMonth() + 1) : '0' + (d.getUTCMonth() + 1);
+    var f = d.getUTCDate() > 9 ? d.getUTCDate() : '0' + d.getUTCDate();
+    var g = d.getUTCHours() > 9 ? d.getUTCHours() : '0' + d.getUTCHours();
+    var h = d.getUTCMinutes() > 9 ? d.getUTCMinutes() : '0' + d.getUTCMinutes();
+    var i = d.getUTCSeconds() > 9 ? d.getUTCSeconds() : '0' + d.getUTCSeconds();
+    var j = e + "/" + f + "/" + d.getUTCFullYear() + " " + g + ":" + h + ":" + i;
+    exec('luna-send -n 1 palm://com.palm.power/timeout/set \'{"key":"cn.xuepx.fetion.timer","at":"' + j + '","wakeup":true,"uri":"palm://cn.xuepx.fetion.service/sync","params":{}}\'')
+//    localCall("palm://com.palm.power/timeout", "set", {
+//        "key":"cn.xuepx.fetion.timer",
+//        "at":j,
+//        "wakeup":true,
+//        "uri":"palm://cn.xuepx.fetion.service/sync",
+//        "params":{}
+//    })
+}
+
 var sync = Class.create({
     setup:function () {
         var args = this.controller.args;
@@ -719,6 +737,7 @@ var sync = Class.create({
         return future;
     },
     run:function (syncFuture) {
+        setWakeup(UPDATE_INTERVAL);
         //get cookies;
         var cookies;
         localCall("palm://com.palm.keymanager", "fetchKey", { "keyname":"FetionCookie"}, function (f1) {
@@ -728,11 +747,9 @@ var sync = Class.create({
             }
             cookies = Base64.decode(JSON.parse(f1.responseText).keydata);
             getNewMsg(cookies, function (inResponse) {
-//                syncFuture.result = { returnValue:false, error:inResponse};
-//                return;
                 if (inResponse.returnValue === true) {
                     if (inResponse.newmsg.length < 1) {
-                        future.result = { returnValue:true, msg:"no Msg"};
+                        syncFuture.result = { returnValue:true, msg:"no Msg"};
                         return;
                     }
                     var idMsgs = [];
@@ -764,11 +781,6 @@ var sync = Class.create({
         });
     },
     complete:function () {
-        localCall("palm://com.palm.power/timeout", "set", {
-            "key":"cn.xuepx.fetion",
-            "in":SYNC_INTERVAL,
-            "wakeup":true,
-            "uri":"palm://cn.xuepx.fetion.service/sync"
-        })
+
     }
 })

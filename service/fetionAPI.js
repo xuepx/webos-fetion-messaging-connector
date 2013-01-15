@@ -312,16 +312,16 @@ var getNewMsg = function (cookies, callback) {
 //        callback({returnValue:false, newmsg:inResponse0});
 //        return;
         AjaxPost(host, newmsgPath, {}, cookies, function (inResponse) {
-            if (!inResponse.returnValue) {
+            if (inResponse.returnValue==="") {
                 if (!!callback) {
                     callback({returnValue:false, newmsg:[]});
                 }
                 return false;
             }
             if (!!callback) {
-                try{
+                try {
                     callback({returnValue:true, newmsg:JSON.parse(inResponse.responseText).chat_messages});
-                }catch(err){
+                } catch (err) {
                     callback({returnValue:true, newmsg:[]});
                 }
             }
@@ -384,12 +384,22 @@ var sendMsgbyId = function (cookies, idContact, msg, callback) {
                 }
                 return false;
             }
-            if (!!callback) {
-                callback({
-                    returnValue:true,
-                    responseText:"success:" + inResponse.responseText
-                });
+            if (JSON.parse(inResponse.responseText).sendCode === "true") {
+                if (!!callback) {
+                    callback({
+                        returnValue:true,
+                        responseText:"success:" + inResponse.responseText
+                    });
+                }
+            } else {
+                if (!!callback) {
+                    callback({
+                        returnValue:false,
+                        responseText:"error:" + JSON.parse(inResponse.responseText).sendCode
+                    });
+                }
             }
+
             return true;
         });
     });
@@ -510,32 +520,3 @@ var addFriend = function (cookies, mobile, callback) {
         }
     });
 }
-//fetionLogin('13000000000', 'xuepx', function (inResponse) {
-//    console.log(inResponse);
-//        getAllContact(inResponse.cookies.join(";"), function (inResponse2) {
-//            console.log(inResponse2.allContactList);
-//        })
-//        getNewMsg(inResponse.cookies.join(";"), function (inResponse2) {
-//            if (inResponse2.returnValue === false)return;
-//            console.log(inResponse2.newmsg)
-//            if (inResponse2.newmsg.length < 1)return;
-//            var idMsgs = [];
-//            for (var k = 0; k < inResponse2.newmsg.length; k++) {
-//                idMsgs.push(inResponse2.newmsg[k].idMessage);
-//            }
-//            readMsgs(inResponse.cookies.join(";"), idMsgs, function (inResponse3) {
-//                console.log(inResponse3);
-//            })
-//        });
-//        sendMsg(inResponse.cookies.join(";"),'28389239','你好are you!',function(inResponse){
-//            console.log(inResponse);
-//        });
-//        getIdContact(inResponse.cookies.join(";"),'1300000000',function(inResponse){
-//            console.log(inResponse);
-//        });
-//    console.log(inResponse.cookies.slice(1))
-//        sendMsg(inResponse.cookies.join(";"), '1300000000', '怎么了', function (inResponse) {
-//            console.log(inResponse);
-//        });
-//    }
-//})

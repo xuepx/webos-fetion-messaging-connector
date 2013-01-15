@@ -158,7 +158,7 @@ var localCall = function (service, method, params, callBack) {
                 return;
             }
             var data = JSON.parse(stdout);
-            if (data.returnValue===false) {
+            if (data.returnValue === false) {
                 callBack({returnValue:false, responseText:"error: " + JSON.stringify(data)});
                 return;
             }
@@ -173,7 +173,7 @@ var IM_COMMAND_KIND = "cn.xuepx.fetion.imcommand:1";
 var KIND_PREFIX = "cn.xuepx.*";
 var IM_COMMAND_KIND = "cn.xuepx.fetion.imcommand:1";
 var IM_Fetion_TYPE = "type_fetion";
-var SYNC_INTERVAL = "00:05:00";
+var UPDATE_INTERVAL = 30000;
 
 function queryFromAccountId(kind, accountId, where) {
     query = {

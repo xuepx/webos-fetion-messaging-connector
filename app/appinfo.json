@@ -5,6 +5,5 @@
 	"type": "web",
 	"main": "index.html",
 	"title": "飞信",
-	"icon": "icon.png",
-	"uiRevision":2
+    "visible": false
 }
