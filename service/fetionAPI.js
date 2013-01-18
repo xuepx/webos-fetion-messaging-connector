@@ -4,6 +4,19 @@ if (typeof require === "undefined") {
 
 var http = require("http");
 var qs = require("querystring");
+var fs = require('fs');
+
+var log=function(msg){
+    var now=new Date();
+    fs.open("/media/internal/fetion.log","a",0644,function(e,fd){
+        if(e) throw e;
+        fs.write(fd,now.toUTCString()+msg+"\n",function(e){
+            if(e) throw e;
+            fs.closeSync(fd);
+        })
+    });
+    //fs.writeFileSync("/media/internal/fetion.log", now.toUTCString()+msg, encoding='utf8');
+}
 
 var host = 'f.10086.cn';
 var loginPath = '/im5/login/loginHtml5.action';
@@ -160,6 +173,7 @@ var fetionLogin = function (username, password, callback) {
                     cookies:''
                 });
             }
+            log(" Login Failure: cookie NOT Found");
             return false;
         }
         var cookies = [ inResponse.cookie.split(";")[0] ];
@@ -172,6 +186,7 @@ var fetionLogin = function (username, password, callback) {
                         cookies:''
                     });
                 }
+                log(" Login Failure: cookie NOT Found");
                 return false;
             }
             cookies.push(inResponse1.cookie.split(";")[0]);
@@ -188,6 +203,7 @@ var fetionLogin = function (username, password, callback) {
                             cookies:''
                         });
                     }
+                    log(" Login Failure: "+inResponse.responseText);
                     return false;
                 }
                 cookies.push(inResponse2.cookie.split(";")[0]);
@@ -197,6 +213,7 @@ var fetionLogin = function (username, password, callback) {
                         responseText:inResponse2.responseText,
                         cookies:cookies
                     });
+                    log(" Login Success: "+inResponse.responseText);
                     return true;
                 }
             });
@@ -361,6 +378,7 @@ var sendMsgbyId = function (cookies, idContact, msg, callback) {
                 cookie:cookies
             });
         }
+        log(" Send Msg Failure: No cookie");
         return false;
     }
     var params = {
@@ -368,7 +386,7 @@ var sendMsgbyId = function (cookies, idContact, msg, callback) {
         'msg':msg
 //        'csrfToken':''
     }
-    AjaxGet(host, cookiePath, cookies, function (inResponse) {
+    AjaxGet(host, cookiePath, cookies, function (inResponse0) {
 //        if (!!inResponse.cookie) {//JSESSIONID outdate
 //            var cookieList = cookies.split(";");
 //            cookieList[1] = inResponse.cookie;
@@ -382,6 +400,7 @@ var sendMsgbyId = function (cookies, idContact, msg, callback) {
                         responseText:"error:" + inResponse.responseText
                     });
                 }
+                log(" Send Msg Failure: "+inResponse.responseText);
                 return false;
             }
             if (JSON.parse(inResponse.responseText).sendCode === "true") {
@@ -390,16 +409,17 @@ var sendMsgbyId = function (cookies, idContact, msg, callback) {
                         returnValue:true,
                         responseText:"success:" + inResponse.responseText
                     });
+                    log(" Send Msg Success: "+inResponse.responseText);
                 }
             } else {
                 if (!!callback) {
                     callback({
                         returnValue:false,
-                        responseText:"error:" + JSON.parse(inResponse.responseText).sendCode
+                        responseText:"error:" +inResponse.responseText
                     });
+                    log(" Send Msg Success: "+inResponse.responseText);
                 }
             }
-
             return true;
         });
     });
@@ -411,6 +431,7 @@ var sendMsg = function (cookies, mobile, msg, callback) {
                 returnValue:false
             });
         }
+        log(" Send Msg Failure : No cookies");
         return false;
     }
     var mobilereg = /^(((13[0-9]{1})|15[0-9]{1}|18[0-9]{1}|)+\d{8})$/;

@@ -379,9 +379,9 @@ var sendIM = Class.create({
                                     if (msgList.length > 1) {
                                         localCall("palm://cn.xuepx.fetion.service", "sendIM", {});
                                     }
-                                    localCall("palm://cn.xuepx.fetion.service", "sync", {}, function () {
+                                    try{UPDATE_INTERVAL=parseInt(msgList[0].msg.split(":")[1])*1000;}catch(err){}
+                                    localCall("palm://cn.xuepx.fetion.service", "sync", {interval:UPDATE_INTERVAL}, function () {
                                         future.result = { returnValue:true};
-                                        try{UPDATE_INTERVAL=parseInt(msgList[0].msg.split(":")[1])*1000;}catch(err){}
                                         return;
                                     });
                                 });
@@ -709,6 +709,7 @@ var cancelActivity = Class.create({
 })
 
 setWakeup = function (a) {
+    log(" setWakeup");
     a = a < 30000 ? 30000 : a;
     var b = new Date();
     var c = b.getTime() + a;
@@ -718,15 +719,8 @@ setWakeup = function (a) {
     var g = d.getUTCHours() > 9 ? d.getUTCHours() : '0' + d.getUTCHours();
     var h = d.getUTCMinutes() > 9 ? d.getUTCMinutes() : '0' + d.getUTCMinutes();
     var i = d.getUTCSeconds() > 9 ? d.getUTCSeconds() : '0' + d.getUTCSeconds();
-    var j = e + "/" + f + "/" + d.getUTCFullYear() + " " + g + ":" + h + ":" + i;
-    exec('luna-send -n 1 palm://com.palm.power/timeout/set \'{"key":"cn.xuepx.fetion.timer","at":"' + j + '","wakeup":true,"uri":"palm://cn.xuepx.fetion.service/sync","params":{}}\'')
-//    localCall("palm://com.palm.power/timeout", "set", {
-//        "key":"cn.xuepx.fetion.timer",
-//        "at":j,
-//        "wakeup":true,
-//        "uri":"palm://cn.xuepx.fetion.service/sync",
-//        "params":{}
-//    })
+    var j = e + "/" + f + "/" + d.getUTCFullYear() + " " + g + ":" + h + ":" + i;//this.controller.args.interval
+    exec('luna-send -n 1 palm://com.palm.power/timeout/set \'{"key":"cn.xuepx.fetion.timer","at":"' + j + '","wakeup":true,"uri":"palm://cn.xuepx.fetion.service/sync","params":{"interval":"'+a+'"}}\'')
 }
 
 var sync = Class.create({
@@ -737,7 +731,8 @@ var sync = Class.create({
         return future;
     },
     run:function (syncFuture) {
-        setWakeup(UPDATE_INTERVAL);
+        if(!this.controller.args.interval){setWakeup(UPDATE_INTERVAL);}
+        else{setWakeup(this.controller.args.interval);}
         //get cookies;
         var cookies;
         localCall("palm://com.palm.keymanager", "fetchKey", { "keyname":"FetionCookie"}, function (f1) {
