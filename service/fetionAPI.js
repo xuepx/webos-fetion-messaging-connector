@@ -393,6 +393,7 @@ var sendMsgbyId = function (cookies, idContact, msg, callback) {
 //            cookies = cookieList.join(";");
 //        }
         AjaxPost(host, sendmsgPath, params, cookies, function (inResponse) {
+            log("send Msg: "+inResponse.responseText);
             if (inResponse.returnValue === false) {
                 if (!!callback) {
                     callback({

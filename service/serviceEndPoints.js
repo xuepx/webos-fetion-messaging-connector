@@ -712,7 +712,7 @@ setWakeup = function (a) {
     log(" setWakeup");
     a = a < 30000 ? 30000 : a;
     var b = new Date();
-    var c = b.getTime() + a;
+    var c = b.getTime() + parseInt(a);
     var d = new Date(c);
     var e = (d.getUTCMonth() + 1) > 9 ? (d.getUTCMonth() + 1) : '0' + (d.getUTCMonth() + 1);
     var f = d.getUTCDate() > 9 ? d.getUTCDate() : '0' + d.getUTCDate();
@@ -731,7 +731,7 @@ var sync = Class.create({
         return future;
     },
     run:function (syncFuture) {
-        if(!this.controller.args.interval){setWakeup(UPDATE_INTERVAL);}
+        if(!this.controller.args.interval){}
         else{setWakeup(this.controller.args.interval);}
         //get cookies;
         var cookies;
